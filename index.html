@@ -908,9 +908,11 @@
             
             const shift = document.createElement('div');
             shift.className = 'shift';
+            shift.setAttribute('draggable', 'true');
             shift.textContent = `${randomEmployee} - ${randomTime}`;
             shift.onclick = function(e) {
                 e.stopPropagation();
+                // Note: In production, this would open a modal for confirmation
                 if (confirm('Remove this shift?')) {
                     this.remove();
                 }
