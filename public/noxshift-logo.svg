@@ -1,0 +1,43 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="moonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#93c5fd;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main circle background -->
+  <circle cx="100" cy="100" r="95" fill="url(#bgGradient)"/>
+  
+  <!-- Crescent moon shape (representing "Nox" - night) -->
+  <circle cx="85" cy="75" r="35" fill="url(#moonGradient)"/>
+  <circle cx="95" cy="75" r="30" fill="#1e3a8a"/>
+  
+  <!-- Arrow/Shift symbol (representing movement/shift) -->
+  <path d="M 130 100 L 160 80 L 160 90 L 180 90 L 180 110 L 160 110 L 160 120 Z" fill="#60a5fa" stroke="#93c5fd" stroke-width="2"/>
+  <path d="M 130 100 L 160 120 L 160 110 L 180 110 L 180 90 L 160 90 L 160 80 Z" fill="#3b82f6" stroke="#60a5fa" stroke-width="2"/>
+  
+  <!-- Calendar grid elements -->
+  <rect x="30" y="130" width="55" height="50" rx="4" fill="#1e40af" opacity="0.6"/>
+  <line x1="40" y1="140" x2="75" y2="140" stroke="#60a5fa" stroke-width="2"/>
+  <circle cx="45" cy="150" r="2" fill="#93c5fd"/>
+  <circle cx="55" cy="150" r="2" fill="#93c5fd"/>
+  <circle cx="65" cy="150" r="2" fill="#93c5fd"/>
+  <circle cx="45" cy="160" r="2" fill="#60a5fa"/>
+  <circle cx="55" cy="160" r="2" fill="#60a5fa"/>
+  <circle cx="65" cy="160" r="2" fill="#60a5fa"/>
+  <circle cx="45" cy="170" r="2" fill="#3b82f6"/>
+  <circle cx="55" cy="170" r="2" fill="#3b82f6"/>
+  <circle cx="65" cy="170" r="2" fill="#3b82f6"/>
+  
+  <!-- Clock element (representing time/scheduling) -->
+  <circle cx="140" cy="155" r="20" fill="#1e40af" opacity="0.6"/>
+  <line x1="140" y1="155" x2="140" y2="145" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="140" y1="155" x2="148" y2="155" stroke="#93c5fd" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="140" cy="155" r="2" fill="#93c5fd"/>
+</svg>

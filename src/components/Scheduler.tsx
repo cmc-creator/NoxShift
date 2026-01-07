@@ -48,7 +48,7 @@ import {
   getDocs,
   writeBatch
 } from 'firebase/firestore';
-import { firebaseConfig, appId as configAppId, initialAuthToken } from './firebase.config';
+import { firebaseConfig, appId as configAppId, initialAuthToken } from '../firebase.config';
 
 // --- Firebase Configuration ---
 const app = initializeApp(firebaseConfig);
@@ -692,9 +692,11 @@ export default function Scheduler() {
     <div className={`min-h-screen bg-slate-50 text-slate-900 ${FONTS[appFont]} flex flex-col print:bg-white`}>
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row items-center justify-between sticky top-0 z-10 shadow-sm gap-4 print:static print:shadow-none print:px-0 print:py-2">
         <div className="flex items-center gap-3">
-          <div className={`${themeClasses.primary} p-2 rounded-lg print:hidden text-white`}>
-            <CalendarIcon className="w-6 h-6" />
-          </div>
+          <img 
+            src="/noxshift-logo.svg" 
+            alt="NoxShift Logo" 
+            className="w-10 h-10 print:w-12 print:h-12"
+          />
           <div>
             <h1 className="text-xl font-bold text-slate-800 leading-none print:text-2xl tracking-tight">NoxShift</h1>
             <p className="text-xs text-slate-500 mt-1 font-medium tracking-wide print:text-slate-600">WORKFORCE MANAGEMENT</p>
