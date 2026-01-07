@@ -253,7 +253,15 @@ In Settings → Shift Presets:
 
 ## 📸 Screenshots
 
-[Demo screenshots coming soon]
+### Logo & Branding
+![NoxShift Logo & Branding](https://github.com/user-attachments/assets/9a7c64df-1ee3-416a-acdd-27f413b3a8f0)
+
+The new NoxShift logo features:
+- **Crescent Moon** - Representing "Nox" (night in Latin)
+- **Shift Arrows** - Symbolizing schedule changes and workforce movement
+- **Calendar Grid** - Representing scheduling and organization
+- **Clock Icon** - Symbolizing time management
+- **Professional Blue Gradient** - Modern, trustworthy color scheme
 
 ## 🤝 Contributing
 

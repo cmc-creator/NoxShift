@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoxShift - Logo & Branding Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 24px;
+            padding: 60px 40px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        
+        .logo-display {
+            margin-bottom: 40px;
+        }
+        
+        .logo-display img {
+            width: 200px;
+            height: 200px;
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.15));
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+        }
+        
+        .tagline {
+            font-size: 1.25rem;
+            color: #64748b;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            color: #475569;
+            line-height: 1.8;
+            margin-bottom: 40px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            text-align: left;
+            margin: 40px 0;
+        }
+        
+        .feature {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .feature h3 {
+            color: #1e3a8a;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+        
+        .feature p {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .color-palette {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 40px;
+        }
+        
+        .color-swatch {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .color-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+        
+        .header-preview {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 40px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-preview img {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .header-text h2 {
+            color: #1e293b;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .header-text p {
+            color: #64748b;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-display">
+            <img src="noxshift-logo.svg" alt="NoxShift Logo">
+        </div>
+        
+        <h1>NoxShift</h1>
+        <p class="tagline">Workforce Management</p>
+        
+        <p class="description">
+            A modern, feature-rich employee shift scheduling application that helps teams 
+            manage schedules efficiently with smart automation, real-time collaboration, 
+            and powerful analytics.
+        </p>
+        
+        <div class="header-preview">
+            <img src="noxshift-logo.svg" alt="NoxShift">
+            <div class="header-text">
+                <h2>NoxShift</h2>
+                <p>WORKFORCE MANAGEMENT</p>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>📅 Smart Scheduling</h3>
+                <p>Visual calendar with drag-and-drop, shift presets, and department filtering</p>
+            </div>
+            <div class="feature">
+                <h3>👥 Employee Management</h3>
+                <p>Track rates, availability, and time off with conflict detection</p>
+            </div>
+            <div class="feature">
+                <h3>📊 Analytics & Reports</h3>
+                <p>Monitor hours, costs, and coverage with detailed insights</p>
+            </div>
+            <div class="feature">
+                <h3>🎨 Customizable</h3>
+                <p>6 themes, custom roles, departments, and shift templates</p>
+            </div>
+            <div class="feature">
+                <h3>☁️ Cloud Sync</h3>
+                <p>Real-time Firebase integration with auto-save</p>
+            </div>
+            <div class="feature">
+                <h3>📱 Responsive</h3>
+                <p>Works seamlessly on desktop, tablet, and mobile</p>
+            </div>
+        </div>
+        
+        <h3 style="margin: 40px 0 20px; color: #1e3a8a;">Brand Colors</h3>
+        <div class="color-palette">
+            <div>
+                <div class="color-swatch" style="background: #1e3a8a;"></div>
+                <div class="color-label">#1e3a8a</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #3b82f6;"></div>
+                <div class="color-label">#3b82f6</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #60a5fa;"></div>
+                <div class="color-label">#60a5fa</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #93c5fd;"></div>
+                <div class="color-label">#93c5fd</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
