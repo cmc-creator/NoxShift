@@ -158,6 +158,7 @@ export default function Scheduler() {
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState({ type: 'neutral', msg: 'Connecting...' });
+  const [logoError, setLogoError] = useState(false);
   
   // Modals & Panels
   const [showSettings, setShowSettings] = useState(false);
@@ -692,18 +693,18 @@ export default function Scheduler() {
     <div className={`min-h-screen bg-slate-50 text-slate-900 ${FONTS[appFont]} flex flex-col print:bg-white`}>
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row items-center justify-between sticky top-0 z-10 shadow-sm gap-4 print:static print:shadow-none print:px-0 print:py-2">
         <div className="flex items-center gap-3">
-          <img 
-            src="/noxshift-logo.svg" 
-            alt="NoxShift Logo" 
-            className="w-10 h-10 print:w-12 print:h-12"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              const fallback = document.createElement('div');
-              fallback.className = `${themeClasses.primary} p-2 rounded-lg text-white flex items-center justify-center w-10 h-10`;
-              fallback.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>';
-              e.currentTarget.parentElement?.insertBefore(fallback, e.currentTarget);
-            }}
-          />
+          {!logoError ? (
+            <img 
+              src="/noxshift-logo.svg" 
+              alt="NoxShift Logo" 
+              className="w-10 h-10 print:w-12 print:h-12"
+              onError={() => setLogoError(true)}
+            />
+          ) : (
+            <div className={`${themeClasses.primary} p-2 rounded-lg print:hidden text-white`}>
+              <CalendarIcon className="w-6 h-6" />
+            </div>
+          )}
           <div>
             <h1 className="text-xl font-bold text-slate-800 leading-none print:text-2xl tracking-tight">NoxShift</h1>
             <p className="text-xs text-slate-500 mt-1 font-medium tracking-wide print:text-slate-600">WORKFORCE MANAGEMENT</p>
