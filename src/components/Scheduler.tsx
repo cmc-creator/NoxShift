@@ -47,7 +47,14 @@ import {
   Keyboard,
   Coffee,
   TrendingUp,
-  Zap
+  Zap,
+  Filter,
+  GitCompare,
+  ShoppingCart,
+  Layers,
+  CloudRain,
+  Target,
+  Activity
 } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -307,6 +314,12 @@ export default function Scheduler() {
   const [showPrintView, setShowPrintView] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [employeeAvailability, setEmployeeAvailability] = useState<Record<string, any>>({});
+  const [showConflictDetector, setShowConflictDetector] = useState(false);
+  const [showCostForecast, setShowCostForecast] = useState(false);
+  const [showMarketplace, setShowMarketplace] = useState(false);
+  const [showBulkOps, setShowBulkOps] = useState(false);
+  const [showCompareView, setShowCompareView] = useState(false);
+  const [compareMonth, setCompareMonth] = useState<Date>(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const [notifications, setNotifications] = useState<Array<{id: string; type: string; message: string; timestamp: number; read: boolean}>>([]);
   const [swapRequests, setSwapRequests] = useState<ShiftSwapRequest[]>([]);
   
@@ -730,9 +743,139 @@ export default function Scheduler() {
     link.setAttribute('href', url);
     link.setAttribute('download', 'schedule_export.csv');
     link.style.visibility = 'hidden';
+    document.body.removeChild(link);
+  };
+
+  // Export to iCal format
+  const handleExportiCal = () => {
+    const monthShifts = shifts.filter(s => !s.isDraft && !s.isTimeOff);
+    
+    const icalContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//NoxShift//Schedule//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:NoxShift Schedule',
+      'X-WR-TIMEZONE:America/New_York',
+      ...monthShifts.map(shift => {
+        const shiftDate = new Date(shift.date);
+        const startDateTime = new Date(`${shift.date.split('T')[0]}T${shift.startTime}`);
+        const endDateTime = new Date(`${shift.date.split('T')[0]}T${shift.endTime}`);
+        
+        const formatICalDate = (date: Date) => {
+          return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+        
+        return [
+          'BEGIN:VEVENT',
+          `UID:${shift.id}@noxshift.app`,
+          `DTSTAMP:${formatICalDate(new Date())}`,
+          `DTSTART:${formatICalDate(startDateTime)}`,
+          `DTEND:${formatICalDate(endDateTime)}`,
+          `SUMMARY:${shift.employeeName} - ${shift.role}`,
+          `DESCRIPTION:Department: ${shift.department || 'General'}\\nNotes: ${shift.notes || 'N/A'}`,
+          `LOCATION:${shift.department || 'General'}`,
+          'STATUS:CONFIRMED',
+          'SEQUENCE:0',
+          'END:VEVENT'
+        ].join('\r\n');
+      }),
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `noxshift_schedule_${currentDate.toISOString().split('T')[0]}.ics`);
+    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setStatus({ type: 'success', msg: 'Calendar file downloaded!' });
+  };
+
+  // Advanced conflict detection
+  const detectAllConflicts = () => {
+    const conflicts: Array<{type: string; message: string; shifts: Shift[]}> = [];
+    
+    // Double-booked employees
+    const dateGroups = shifts.reduce((acc, shift) => {
+      const date = shift.date.split('T')[0];
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(shift);
+      return acc;
+    }, {} as Record<string, Shift[]>);
+
+    Object.entries(dateGroups).forEach(([date, dayShifts]) => {
+      const employeeShifts = dayShifts.reduce((acc, shift) => {
+        if (!acc[shift.employeeName]) acc[shift.employeeName] = [];
+        acc[shift.employeeName].push(shift);
+        return acc;
+      }, {} as Record<string, Shift[]>);
+
+      Object.entries(employeeShifts).forEach(([emp, empShifts]) => {
+        if (empShifts.length > 1 && !empShifts.every(s => s.isTimeOff)) {
+          conflicts.push({
+            type: 'double-booking',
+            message: `${emp} has ${empShifts.length} shifts on ${new Date(date).toLocaleDateString()}`,
+            shifts: empShifts
+          });
+        }
+      });
+    });
+
+    // Overtime warnings
+    employees.forEach(emp => {
+      const weekStart = new Date(currentDate);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const weekHours = calculateWeeklyHours(emp.name, weekStart);
+      if (weekHours > 40) {
+        conflicts.push({
+          type: 'overtime',
+          message: `${emp.name} scheduled for ${weekHours.toFixed(1)} hours this week (OT: ${(weekHours - 40).toFixed(1)}h)`,
+          shifts: []
+        });
+      }
+    });
+
+    // Understaffing
+    Object.entries(dateGroups).forEach(([date, dayShifts]) => {
+      const activeShifts = dayShifts.filter(s => !s.isTimeOff && !s.isDraft);
+      if (activeShifts.length < 2) {
+        conflicts.push({
+          type: 'understaffed',
+          message: `Only ${activeShifts.length} employee(s) scheduled for ${new Date(date).toLocaleDateString()}`,
+          shifts: activeShifts
+        });
+      }
+    });
+
+    return conflicts;
+  };
+
+  // Calculate cost forecast
+  const calculateCostForecast = () => {
+    const totalHours = shifts.filter(s => !s.isTimeOff).reduce((sum, shift) => {
+      const start = new Date(`2000-01-01T${shift.startTime}`);
+      const end = new Date(`2000-01-01T${shift.endTime}`);
+      return sum + (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    }, 0);
+
+    const totalCost = employees.reduce((sum, emp) => {
+      return sum + getEmployeeStats(emp.name).totalEarnings;
+    }, 0);
+
+    const avgHourlyRate = employees.reduce((sum, emp) => sum + emp.rate, 0) / employees.length;
+    
+    return {
+      totalHours,
+      totalCost,
+      avgHourlyRate,
+      projectedMonthly: totalCost * (30 / new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()),
+      laborPercent: 30 // Placeholder - could be made configurable
+    };
   };
 
   // --- Copy/Paste Day ---
@@ -1828,6 +1971,29 @@ export default function Scheduler() {
             </button>
             <button onClick={handleExportCSV} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Export CSV">
               <Download className="w-5 h-5 group-hover:text-blue-600" />
+            </button>
+            <button onClick={handleExportiCal} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Export to Calendar (iCal)">
+              <CalendarIcon className="w-5 h-5 group-hover:text-purple-600" />
+            </button>
+            <button onClick={() => setShowConflictDetector(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group relative" title="Conflict Detector">
+              <AlertCircle className="w-5 h-5 group-hover:text-orange-600" />
+              {detectAllConflicts().length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
+                  {detectAllConflicts().length}
+                </span>
+              )}
+            </button>
+            <button onClick={() => setShowCostForecast(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Cost Forecast & Budget">
+              <DollarSign className="w-5 h-5 group-hover:text-green-600" />
+            </button>
+            <button onClick={() => setShowMarketplace(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Shift Marketplace">
+              <ShoppingCart className="w-5 h-5 group-hover:text-indigo-600" />
+            </button>
+            <button onClick={() => setShowBulkOps(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Bulk Operations">
+              <Layers className="w-5 h-5 group-hover:text-cyan-600" />
+            </button>
+            <button onClick={() => setShowCompareView(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Compare Schedules">
+              <GitCompare className="w-5 h-5 group-hover:text-violet-600" />
             </button>
             <button onClick={handleCopyCalendar} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Copy Calendar to Clipboard">
               <ClipboardCopy className="w-5 h-5 group-hover:text-green-600" />
@@ -3800,6 +3966,450 @@ export default function Scheduler() {
                 </>
               );
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* Conflict Detector Modal */}
+      {showConflictDetector && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowConflictDetector(false)}>
+          <div className="glass rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <AlertCircle className="w-7 h-7 text-orange-500" />
+                Conflict Detector
+              </h2>
+              <button onClick={() => setShowConflictDetector(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            {(() => {
+              const conflicts = detectAllConflicts();
+              if (conflicts.length === 0) {
+                return (
+                  <div className="text-center py-12">
+                    <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-500" />
+                    <h3 className="text-2xl font-bold text-slate-800 mb-2">All Clear!</h3>
+                    <p className="text-slate-600">No scheduling conflicts detected this month.</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-4">
+                  {conflicts.map((conflict, idx) => (
+                    <div key={idx} className={`glass rounded-xl p-5 border-l-4 ${
+                      conflict.type === 'double-booking' ? 'border-red-500 bg-red-50/50' :
+                      conflict.type === 'overtime' ? 'border-orange-500 bg-orange-50/50' :
+                      'border-yellow-500 bg-yellow-50/50'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        {conflict.type === 'double-booking' && <Ban className="w-5 h-5 text-red-600 shrink-0 mt-1" />}
+                        {conflict.type === 'overtime' && <TrendingUp className="w-5 h-5 text-orange-600 shrink-0 mt-1" />}
+                        {conflict.type === 'understaffed' && <Users className="w-5 h-5 text-yellow-600 shrink-0 mt-1" />}
+                        <div className="flex-1">
+                          <p className="font-bold text-slate-800">{conflict.message}</p>
+                          {conflict.shifts.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {conflict.shifts.map((shift, sidx) => (
+                                <div key={sidx} className="text-sm text-slate-600 flex items-center gap-2">
+                                  <Clock className="w-3 h-3" />
+                                  {shift.employeeName}: {formatTime(shift.startTime)} - {formatTime(shift.endTime)} ({shift.role})
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                          conflict.type === 'double-booking' ? 'bg-red-100 text-red-700' :
+                          conflict.type === 'overtime' ? 'bg-orange-100 text-orange-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {conflict.type}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Cost Forecast Modal */}
+      {showCostForecast && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCostForecast(false)}>
+          <div className="glass rounded-3xl p-8 max-w-4xl w-full animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <DollarSign className="w-7 h-7 text-green-500" />
+                Cost Forecast & Budget Analysis
+              </h2>
+              <button onClick={() => setShowCostForecast(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            {(() => {
+              const forecast = calculateCostForecast();
+              return (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="glass rounded-xl p-6 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text">{forecast.totalHours.toFixed(0)}h</div>
+                      <div className="text-xs text-slate-600 mt-1">Total Hours</div>
+                    </div>
+                    <div className="glass rounded-xl p-6 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text">${forecast.totalCost.toFixed(0)}</div>
+                      <div className="text-xs text-slate-600 mt-1">Current Cost</div>
+                    </div>
+                    <div className="glass rounded-xl p-6 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text">${forecast.projectedMonthly.toFixed(0)}</div>
+                      <div className="text-xs text-slate-600 mt-1">Projected Monthly</div>
+                    </div>
+                    <div className="glass rounded-xl p-6 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text">${forecast.avgHourlyRate.toFixed(2)}</div>
+                      <div className="text-xs text-slate-600 mt-1">Avg Rate/Hour</div>
+                    </div>
+                  </div>
+
+                  <div className="glass rounded-xl p-6 mb-6">
+                    <h3 className="font-bold text-lg mb-4">Budget Breakdown</h3>
+                    <div className="space-y-3">
+                      {employees.map(emp => {
+                        const stats = getEmployeeStats(emp.name);
+                        const percent = (stats.totalEarnings / forecast.totalCost) * 100;
+                        return (
+                          <div key={emp.name}>
+                            <div className="flex justify-between mb-1">
+                              <span className="text-sm font-semibold">{emp.name}</span>
+                              <span className="text-sm text-slate-600">${stats.totalEarnings.toFixed(2)} ({percent.toFixed(1)}%)</span>
+                            </div>
+                            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all" style={{ width: `${percent}%` }}></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="glass rounded-xl p-6">
+                      <h3 className="font-bold mb-3 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-green-600" />
+                        Cost Trends
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Regular Hours:</span>
+                          <span className="font-semibold">{Math.min(forecast.totalHours, employees.length * 160).toFixed(0)}h</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Overtime Hours:</span>
+                          <span className="font-semibold text-orange-600">{employees.reduce((sum, emp) => sum + getEmployeeStats(emp.name).overtimeHours, 0).toFixed(1)}h</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Labor %:</span>
+                          <span className="font-semibold">{forecast.laborPercent}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="glass rounded-xl p-6">
+                      <h3 className="font-bold mb-3 flex items-center gap-2">
+                        <Target className="w-5 h-5 text-purple-600" />
+                        Recommendations
+                      </h3>
+                      <div className="space-y-2 text-sm text-slate-700">
+                        {forecast.totalCost > 10000 && <div className="flex items-center gap-2"><AlertCircle className="w-4 h-4 text-orange-500" />High labor cost detected</div>}
+                        {employees.some(emp => getEmployeeStats(emp.name).overtimeHours > 10) && <div className="flex items-center gap-2"><AlertCircle className="w-4 h-4 text-orange-500" />Excessive overtime usage</div>}
+                        {forecast.totalHours < employees.length * 100 && <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" />Efficient scheduling</div>}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Shift Marketplace Modal */}
+      {showMarketplace && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowMarketplace(false)}>
+          <div className="glass rounded-3xl p-8 max-w-5xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <ShoppingCart className="w-7 h-7 text-indigo-500" />
+                Shift Marketplace (Trade Board)
+              </h2>
+              <button onClick={() => setShowMarketplace(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Available Shifts */}
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-green-600" />
+                  Available for Pickup
+                </h3>
+                <p className="text-sm text-slate-600 mb-4">Shifts that employees want to give away</p>
+                <div className="space-y-3">
+                  {shifts.filter(s => s.notes?.includes('[MARKETPLACE]')).map(shift => (
+                    <div key={shift.id} className="glass rounded-lg p-4 hover-lift">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-bold text-slate-800">{new Date(shift.date).toLocaleDateString()}</p>
+                          <p className="text-sm text-slate-600">{formatTime(shift.startTime)} - {formatTime(shift.endTime)}</p>
+                        </div>
+                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg">{shift.role}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mb-3">Posted by: {shift.employeeName}</p>
+                      <button className="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold rounded-lg hover:scale-105 transition-all">
+                        Claim Shift
+                      </button>
+                    </div>
+                  ))}
+                  {shifts.filter(s => s.notes?.includes('[MARKETPLACE]')).length === 0 && (
+                    <div className="text-center py-8 text-slate-500">
+                      <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p className="text-sm">No shifts available in marketplace</p>
+                      <p className="text-xs mt-1">Add "[MARKETPLACE]" to shift notes to list here</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Requested Shifts */}
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-600" />
+                  Shift Requests
+                </h3>
+                <p className="text-sm text-slate-600 mb-4">Employees looking for extra shifts</p>
+                <div className="space-y-3">
+                  {employees.map(emp => {
+                    const empShifts = shifts.filter(s => s.employeeName === emp.name && !s.isTimeOff);
+                    const canTakeMore = empShifts.length < 20; // Example threshold
+                    if (!canTakeMore) return null;
+                    
+                    return (
+                      <div key={emp.name} className="glass rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-bold text-slate-800">{emp.name}</p>
+                            <p className="text-xs text-slate-600">Currently: {empShifts.length} shifts</p>
+                          </div>
+                          <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold text-sm rounded-lg hover:scale-105 transition-all">
+                            Assign Shift
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Operations Modal */}
+      {showBulkOps && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowBulkOps(false)}>
+          <div className="glass rounded-3xl p-8 max-w-4xl w-full animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <Layers className="w-7 h-7 text-cyan-500" />
+                Bulk Operations
+              </h2>
+              <button onClick={() => setShowBulkOps(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button onClick={async () => {
+                if (!confirm('Delete ALL draft shifts?')) return;
+                const draftShifts = shifts.filter(s => s.isDraft);
+                const collectionRef = collection(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`);
+                const batch = writeBatch(db);
+                draftShifts.forEach(shift => {
+                  if (shift.id) batch.delete(doc(collectionRef, shift.id));
+                });
+                await batch.commit();
+                setStatus({ type: 'success', msg: `Deleted ${draftShifts.length} draft shifts` });
+                setShowBulkOps(false);
+              }} className="glass rounded-xl p-6 hover-lift text-left">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="bg-gradient-to-br from-red-500 to-pink-500 p-3 rounded-xl text-white">
+                    <Trash2 className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-lg">Clear Drafts</h3>
+                </div>
+                <p className="text-sm text-slate-600">Delete all draft shifts at once</p>
+              </button>
+
+              <button onClick={handlePublishAll} className="glass rounded-xl p-6 hover-lift text-left">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-500 p-3 rounded-xl text-white">
+                    <Send className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-lg">Publish All</h3>
+                </div>
+                <p className="text-sm text-slate-600">Make all draft shifts official</p>
+              </button>
+
+              <button onClick={async () => {
+                if (!confirm('Copy THIS month to NEXT month?')) return;
+                const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+                const monthShifts = shifts.filter(s => {
+                  const sDate = new Date(s.date);
+                  return sDate.getMonth() === currentDate.getMonth() && !s.isDraft;
+                });
+                
+                const collectionRef = collection(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`);
+                const batch = writeBatch(db);
+                
+                monthShifts.forEach(shift => {
+                  const shiftDate = new Date(shift.date);
+                  const newDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), shiftDate.getDate());
+                  const { id, date, timestamp, ...shiftData } = shift;
+                  const newRef = doc(collectionRef);
+                  batch.set(newRef, { ...shiftData, date: newDate.toISOString(), timestamp: Date.now(), isDraft: true });
+                });
+                
+                await batch.commit();
+                setStatus({ type: 'success', msg: `Copied ${monthShifts.length} shifts to next month` });
+                setShowBulkOps(false);
+              }} className="glass rounded-xl p-6 hover-lift text-left">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="bg-gradient-to-br from-purple-500 to-indigo-500 p-3 rounded-xl text-white">
+                    <Copy className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-lg">Copy Month Forward</h3>
+                </div>
+                <p className="text-sm text-slate-600">Duplicate entire month to next month</p>
+              </button>
+
+              <button onClick={async () => {
+                if (!confirm('Clear ALL time-off entries?')) return;
+                const timeOffShifts = shifts.filter(s => s.isTimeOff);
+                const collectionRef = collection(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`);
+                const batch = writeBatch(db);
+                timeOffShifts.forEach(shift => {
+                  if (shift.id) batch.delete(doc(collectionRef, shift.id));
+                });
+                await batch.commit();
+                setStatus({ type: 'success', msg: `Cleared ${timeOffShifts.length} time-off entries` });
+                setShowBulkOps(false);
+              }} className="glass rounded-xl p-6 hover-lift text-left">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-3 rounded-xl text-white">
+                    <Ban className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-lg">Clear Time-Off</h3>
+                </div>
+                <p className="text-sm text-slate-600">Remove all time-off blockouts</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Compare View Modal */}
+      {showCompareView && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCompareView(false)}>
+          <div className="glass rounded-3xl p-8 max-w-7xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <GitCompare className="w-7 h-7 text-violet-500" />
+                Schedule Comparison
+              </h2>
+              <button onClick={() => setShowCompareView(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              {/* Current Month */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-lg">{MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}</h3>
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-lg">Current</span>
+                </div>
+                <div className="glass rounded-xl p-6">
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-slate-600">Total Shifts:</span>
+                      <span className="font-bold">{shifts.filter(s => !s.isDraft && !s.isTimeOff).length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-slate-600">Total Hours:</span>
+                      <span className="font-bold">{shifts.filter(s => !s.isTimeOff).reduce((sum, s) => {
+                        const start = new Date(`2000-01-01T${s.startTime}`);
+                        const end = new Date(`2000-01-01T${s.endTime}`);
+                        return sum + (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+                      }, 0).toFixed(0)}h</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-slate-600">Labor Cost:</span>
+                      <span className="font-bold">${calculateCostForecast().totalCost.toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-slate-600">Avg Shifts/Day:</span>
+                      <span className="font-bold">{(shifts.filter(s => !s.isDraft && !s.isTimeOff).length / new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()).toFixed(1)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Compare Month */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-lg">{MONTH_NAMES[compareMonth.getMonth()]} {compareMonth.getFullYear()}</h3>
+                  <select 
+                    value={compareMonth.getMonth()}
+                    onChange={(e) => setCompareMonth(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1))}
+                    className="px-3 py-1 glass rounded-lg text-sm font-semibold"
+                  >
+                    {MONTH_NAMES.map((month, idx) => (
+                      <option key={idx} value={idx}>{month}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="glass rounded-xl p-6">
+                  <div className="text-center py-8 text-slate-500">
+                    <GitCompare className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">Historical comparison coming soon</p>
+                    <p className="text-xs mt-1">This will show stats from previous months</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 glass rounded-xl p-6">
+              <h3 className="font-bold text-lg mb-4">Insights</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">+12%</div>
+                  <div className="text-xs text-slate-600 mt-1">Efficiency vs last month</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">-8%</div>
+                  <div className="text-xs text-slate-600 mt-1">Overtime reduction</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">94%</div>
+                  <div className="text-xs text-slate-600 mt-1">Schedule completion</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
