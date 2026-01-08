@@ -1,7 +1,12 @@
+import { ThemeProvider } from './context/ThemeContext'
 import Scheduler from './components/Scheduler'
 
 function App() {
-  return <Scheduler />
+  return (
+    <ThemeProvider>
+      <Scheduler />
+    </ThemeProvider>
+  )
 }
 
 export default App
