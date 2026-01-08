@@ -82,7 +82,6 @@ import {
   Battery,
   Thermometer,
   Wind,
-  CloudRain,
   Sunrise,
   Sunset,
   Plug,
@@ -2544,7 +2543,13 @@ export default function Scheduler() {
     );
   };
 
-  if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   const modalTheme = getThemeColors(formData.employeeName || 'Preview', formData.colorHue);
 
@@ -6364,7 +6369,7 @@ export default function Scheduler() {
                 Wellness Monitoring Features
               </h3>
               <ul className="text-sm text-slate-700 space-y-1">
-                <li>• Automatic detection of excessive hours (>60/week = warning, >80/week = critical)</li>
+                <li>• Automatic detection of excessive hours ({'>'}60/week = warning, {'>'}80/week = critical)</li>
                 <li>• Consecutive work days tracker (7+ days triggers alert)</li>
                 <li>• Overtime accumulation monitoring</li>
                 <li>• Burnout risk prediction based on patterns</li>
