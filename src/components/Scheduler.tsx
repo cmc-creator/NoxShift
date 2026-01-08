@@ -1817,6 +1817,19 @@ export default function Scheduler() {
                     Delete
                   </button>
                 )}
+                {!editingShift && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setShowRecurringModal(true);
+                    }}
+                    className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold rounded-xl transition-all hover:scale-105 shadow-lg flex items-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Recurring
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
