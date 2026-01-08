@@ -269,6 +269,12 @@ export default function Scheduler() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showConflictAlert, setShowConflictAlert] = useState(false);
   const [conflictMessage, setConflictMessage] = useState('');
+  const [showRecurringModal, setShowRecurringModal] = useState(false);
+  const [showSwapModal, setShowSwapModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{id: string; type: string; message: string; timestamp: number; read: boolean}>>([]);
+  const [swapRequests, setSwapRequests] = useState<ShiftSwapRequest[]>([]);
   
   // Guild state
   const [currentEmployeeXP, setCurrentEmployeeXP] = useState(2500);
@@ -1522,6 +1528,20 @@ export default function Scheduler() {
             <button onClick={() => setShowTemplateModal(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Shift Templates">
               <FileText className="w-5 h-5 group-hover:text-blue-600" />
             </button>
+            <button onClick={() => setShowSwapModal(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Shift Swaps">
+              <ArrowRightLeft className="w-5 h-5 group-hover:text-orange-600" />
+            </button>
+            <button onClick={() => setShowAdvancedAnalytics(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Advanced Analytics">
+              <BarChart2 className="w-5 h-5 group-hover:text-indigo-600" />
+            </button>
+            <button onClick={() => setShowNotifications(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group relative" title="Notifications">
+              <MessageSquare className="w-5 h-5 group-hover:text-pink-600" />
+              {notifications.filter(n => !n.read).length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-pink-500 to-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
+                  {notifications.filter(n => !n.read).length}
+                </span>
+              )}
+            </button>
             <button onClick={handleExportCSV} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Export CSV">
               <Download className="w-5 h-5 group-hover:text-blue-600" />
             </button>
@@ -2513,6 +2533,495 @@ export default function Scheduler() {
                 <div className="text-2xl mb-1">🌆</div>
                 <div className="font-bold text-sm">Create Evening</div>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recurring Shifts Modal */}
+      {showRecurringModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm print:hidden animate-fade-in" onClick={() => setShowRecurringModal(false)}>
+          <div className="glass rounded-3xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-xl text-white">
+                  <RotateCcw className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-extrabold gradient-text">Recurring Shifts</h2>
+                  <p className="text-sm text-slate-500">Set up repeating shift patterns</p>
+                </div>
+              </div>
+              <button onClick={() => setShowRecurringModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form className="space-y-6" onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const employeeName = formData.get('employee') as string;
+              const startTime = formData.get('startTime') as string;
+              const endTime = formData.get('endTime') as string;
+              const role = formData.get('role') as string;
+              const pattern = formData.get('pattern') as string;
+              const occurrences = parseInt(formData.get('occurrences') as string);
+
+              const collectionRef = collection(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`);
+              const promises: Promise<any>[] = [];
+              const recurringId = `recurring-${Date.now()}`;
+
+              for (let i = 0; i < occurrences; i++) {
+                const shiftDate = new Date(currentDate);
+                if (pattern === 'daily') shiftDate.setDate(shiftDate.getDate() + i);
+                else if (pattern === 'weekly') shiftDate.setDate(shiftDate.getDate() + (i * 7));
+                else if (pattern === 'biweekly') shiftDate.setDate(shiftDate.getDate() + (i * 14));
+                else if (pattern === 'monthly') shiftDate.setMonth(shiftDate.getMonth() + i);
+
+                promises.push(addDoc(collectionRef, {
+                  date: shiftDate.toISOString(),
+                  employeeName,
+                  startTime,
+                  endTime,
+                  role,
+                  department: selectedDepartment === 'All' ? departments[0] : selectedDepartment,
+                  notes: `Recurring ${pattern}`,
+                  isDraft: true,
+                  isRecurring: true,
+                  recurringId,
+                  recurringPattern: pattern,
+                  timestamp: Date.now()
+                }));
+              }
+
+              try {
+                await Promise.all(promises);
+                setStatus({ type: 'success', msg: `Created ${occurrences} recurring shifts!` });
+                setShowRecurringModal(false);
+                e.currentTarget.reset();
+              } catch (error) {
+                console.error('Recurring shift error:', error);
+                setStatus({ type: 'error', msg: 'Failed to create recurring shifts' });
+              }
+            }}>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Employee</label>
+                  <select name="employee" required className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none">
+                    {employees.map(emp => <option key={emp.name} value={emp.name}>{emp.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Role</label>
+                  <select name="role" required className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none">
+                    {roles.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Start Time</label>
+                  <input name="startTime" type="time" required defaultValue="08:00" className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">End Time</label>
+                  <input name="endTime" type="time" required defaultValue="16:00" className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Pattern</label>
+                  <select name="pattern" required className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Bi-weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Occurrences</label>
+                  <input name="occurrences" type="number" required min="1" max="52" defaultValue="4" className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none" />
+                </div>
+              </div>
+              <button type="submit" className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold py-3 rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all shadow-lg flex items-center justify-center gap-2">
+                <RotateCcw className="w-5 h-5" />
+                Create Recurring Shifts
+              </button>
+            </form>
+
+            {/* Existing Recurring Shifts */}
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <h3 className="font-bold text-lg mb-4">Active Recurring Patterns</h3>
+              <div className="space-y-2">
+                {[...new Set(shifts.filter(s => s.isRecurring).map(s => s.recurringId))].map(recurringId => {
+                  const pattern = shifts.find(s => s.recurringId === recurringId);
+                  const count = shifts.filter(s => s.recurringId === recurringId).length;
+                  if (!pattern) return null;
+                  return (
+                    <div key={recurringId} className="glass rounded-xl p-4 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-slate-800">{pattern.employeeName} - {pattern.recurringPattern}</div>
+                        <div className="text-xs text-slate-600">{count} occurrences • {pattern.startTime}-{pattern.endTime}</div>
+                      </div>
+                      <button onClick={async () => {
+                        if (confirm(`Delete all ${count} shifts in this recurring pattern?`)) {
+                          const collectionRef = collection(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`);
+                          const toDelete = shifts.filter(s => s.recurringId === recurringId);
+                          await Promise.all(toDelete.map(s => deleteDoc(doc(collectionRef, s.id!))));
+                          setStatus({ type: 'success', msg: 'Recurring pattern deleted' });
+                        }
+                      }} className="text-red-400 hover:text-red-600 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  );
+                })}
+                {shifts.filter(s => s.isRecurring).length === 0 && (
+                  <div className="text-center py-8 text-slate-400">
+                    <RotateCcw className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">No recurring shifts yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shift Swap/Trade Modal */}
+      {showSwapModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm print:hidden animate-fade-in" onClick={() => setShowSwapModal(false)}>
+          <div className="glass rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-orange-500 to-red-600 p-3 rounded-xl text-white">
+                  <ArrowRightLeft className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-extrabold gradient-text">Shift Swaps & Trading</h2>
+                  <p className="text-sm text-slate-500">Request and manage shift swaps</p>
+                </div>
+              </div>
+              <button onClick={() => setShowSwapModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Request Swap */}
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <ArrowRightLeft className="w-5 h-5 text-orange-600" />
+                  Request Shift Swap
+                </h3>
+                <form className="space-y-4" onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const requestingEmployee = formData.get('from') as string;
+                  const targetEmployee = formData.get('to') as string;
+                  const shiftDate = formData.get('date') as string;
+
+                  const newRequest: ShiftSwapRequest = {
+                    id: `swap-${Date.now()}`,
+                    requestingEmployee,
+                    requestedShiftId: shiftDate,
+                    targetEmployee,
+                    status: 'Pending',
+                    requestedAt: new Date().toISOString()
+                  };
+                  
+                  setSwapRequests([...swapRequests, newRequest]);
+                  setNotifications([...notifications, {
+                    id: `notif-${Date.now()}`,
+                    type: 'swap',
+                    message: `${requestingEmployee} requested to swap shift with ${targetEmployee}`,
+                    timestamp: Date.now(),
+                    read: false
+                  }]);
+                  setStatus({ type: 'success', msg: 'Swap request sent!' });
+                  e.currentTarget.reset();
+                }}>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">From Employee</label>
+                    <select name="from" required className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-orange-500 outline-none">
+                      {employees.map(emp => <option key={emp.name} value={emp.name}>{emp.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">To Employee</label>
+                    <select name="to" required className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-orange-500 outline-none">
+                      {employees.map(emp => <option key={emp.name} value={emp.name}>{emp.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Shift Date</label>
+                    <input name="date" type="date" required className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-orange-500 outline-none" />
+                  </div>
+                  <button type="submit" className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all shadow-lg">
+                    Submit Swap Request
+                  </button>
+                </form>
+              </div>
+
+              {/* Pending Swaps */}
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <FileCheck className="w-5 h-5 text-blue-600" />
+                  Pending Requests
+                </h3>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {swapRequests.filter(r => r.status === 'Pending').map(request => (
+                    <div key={request.id} className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <div className="font-bold text-slate-800">{request.requestingEmployee} → {request.targetEmployee}</div>
+                          <div className="text-xs text-slate-600">{new Date(request.requestedAt).toLocaleDateString()}</div>
+                        </div>
+                        <span className="px-2 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg">Pending</span>
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={() => {
+                          setSwapRequests(swapRequests.map(r => r.id === request.id ? { ...r, status: 'Approved', respondedAt: new Date().toISOString() } : r));
+                          setNotifications([...notifications, {
+                            id: `notif-${Date.now()}`,
+                            type: 'success',
+                            message: `Swap request approved for ${request.requestingEmployee}`,
+                            timestamp: Date.now(),
+                            read: false
+                          }]);
+                          setStatus({ type: 'success', msg: 'Swap approved!' });
+                        }} className="flex-1 bg-green-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-green-600">
+                          ✓ Approve
+                        </button>
+                        <button onClick={() => {
+                          setSwapRequests(swapRequests.map(r => r.id === request.id ? { ...r, status: 'Rejected', respondedAt: new Date().toISOString() } : r));
+                          setStatus({ type: 'error', msg: 'Swap rejected' });
+                        }} className="flex-1 bg-red-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-red-600">
+                          ✗ Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {swapRequests.filter(r => r.status === 'Pending').length === 0 && (
+                    <div className="text-center py-8 text-slate-400">
+                      <FileCheck className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No pending swap requests</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Swap History */}
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <h3 className="font-bold text-lg mb-4">Recent Swaps</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {swapRequests.filter(r => r.status !== 'Pending').map(request => (
+                  <div key={request.id} className={`glass rounded-xl p-3 ${request.status === 'Approved' ? 'border-l-4 border-green-500' : 'border-l-4 border-red-500'}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm">
+                        <div className="font-bold">{request.requestingEmployee} ↔ {request.targetEmployee}</div>
+                        <div className="text-xs text-slate-500">{new Date(request.requestedAt).toLocaleDateString()}</div>
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-bold rounded ${request.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {request.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications Center */}
+      {showNotifications && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm print:hidden animate-fade-in" onClick={() => setShowNotifications(false)}>
+          <div className="glass rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-pink-500 to-red-600 p-3 rounded-xl text-white">
+                  <MessageSquare className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-extrabold gradient-text">Notifications</h2>
+                  <p className="text-sm text-slate-500">{notifications.filter(n => !n.read).length} unread messages</p>
+                </div>
+              </div>
+              <button onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Mark all as read */}
+            {notifications.filter(n => !n.read).length > 0 && (
+              <button onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))} className="w-full mb-4 text-sm text-purple-600 hover:text-purple-800 font-semibold">
+                Mark all as read
+              </button>
+            )}
+
+            <div className="space-y-3">
+              {notifications.sort((a, b) => b.timestamp - a.timestamp).map(notif => (
+                <div key={notif.id} className={`rounded-xl p-4 transition-all ${notif.read ? 'bg-slate-50' : 'bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200'}`}>
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg ${notif.type === 'success' ? 'bg-green-500' : notif.type === 'error' ? 'bg-red-500' : notif.type === 'swap' ? 'bg-orange-500' : 'bg-blue-500'}`}>
+                      {notif.type === 'success' && <CheckCircle2 className="w-4 h-4 text-white" />}
+                      {notif.type === 'error' && <X className="w-4 h-4 text-white" />}
+                      {notif.type === 'swap' && <ArrowRightLeft className="w-4 h-4 text-white" />}
+                      {notif.type === 'info' && <AlertCircle className="w-4 h-4 text-white" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-800">{notif.message}</p>
+                      <p className="text-xs text-slate-500 mt-1">{new Date(notif.timestamp).toLocaleString()}</p>
+                    </div>
+                    {!notif.read && (
+                      <button onClick={() => setNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n))} className="text-purple-600 hover:text-purple-800 text-xs font-semibold">
+                        Mark read
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {notifications.length === 0 && (
+                <div className="text-center py-12 text-slate-400">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-3 opacity-30" />
+                  <p className="font-semibold">No notifications yet</p>
+                  <p className="text-sm mt-1">You'll see updates here when actions occur</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Advanced Analytics Dashboard */}
+      {showAdvancedAnalytics && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm print:hidden animate-fade-in" onClick={() => setShowAdvancedAnalytics(false)}>
+          <div className="glass rounded-3xl p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-3 rounded-xl text-white">
+                  <BarChart2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-extrabold gradient-text">Advanced Analytics</h2>
+                  <p className="text-sm text-slate-500">Deep insights into your schedule</p>
+                </div>
+              </div>
+              <button onClick={() => setShowAdvancedAnalytics(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Key Metrics */}
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="glass rounded-xl p-4 border-l-4 border-purple-500">
+                <div className="text-2xl font-bold text-purple-600">{shifts.length}</div>
+                <div className="text-xs text-slate-600 font-semibold">Total Shifts</div>
+              </div>
+              <div className="glass rounded-xl p-4 border-l-4 border-blue-500">
+                <div className="text-2xl font-bold text-blue-600">{new Set(shifts.map(s => s.employeeName)).size}</div>
+                <div className="text-xs text-slate-600 font-semibold">Active Employees</div>
+              </div>
+              <div className="glass rounded-xl p-4 border-l-4 border-green-500">
+                <div className="text-2xl font-bold text-green-600">${monthStats.totalCost.toLocaleString()}</div>
+                <div className="text-xs text-slate-600 font-semibold">Labor Cost</div>
+              </div>
+              <div className="glass rounded-xl p-4 border-l-4 border-orange-500">
+                <div className="text-2xl font-bold text-orange-600">{shifts.filter(s => s.isDraft).length}</div>
+                <div className="text-xs text-slate-600 font-semibold">Draft Shifts</div>
+              </div>
+            </div>
+
+            {/* Employee Performance */}
+            <div className="glass rounded-xl p-6 mb-6">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5 text-indigo-600" />
+                Employee Breakdown
+              </h3>
+              <div className="space-y-3">
+                {Object.entries(monthStats.hours).sort((a, b) => b[1].hours - a[1].hours).map(([name, data]) => {
+                  const avgDailyHours = data.hours / new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+                  const progressPercent = (data.hours / Math.max(...Object.values(monthStats.hours).map(d => d.hours))) * 100;
+                  return (
+                    <div key={name} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-semibold text-slate-800">{name}</span>
+                        <span className="text-slate-600">{data.hours}h • ${data.cost.toLocaleString()}</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full transition-all" style={{ width: `${progressPercent}%` }}></div>
+                      </div>
+                      <div className="text-xs text-slate-500">Avg: {avgDailyHours.toFixed(1)}h/day</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Department Stats */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Building className="w-5 h-5 text-blue-600" />
+                  By Department
+                </h3>
+                <div className="space-y-3">
+                  {departments.map(dept => {
+                    const deptShifts = shifts.filter(s => (s.department === dept || (!s.department && dept === 'General')) && !s.isTimeOff);
+                    return (
+                      <div key={dept} className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-slate-700">{dept}</span>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg">{deptShifts.length} shifts</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-green-600" />
+                  By Role
+                </h3>
+                <div className="space-y-3">
+                  {roles.map(role => {
+                    const roleShifts = shifts.filter(s => s.role === role && !s.isTimeOff);
+                    return (
+                      <div key={role} className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-slate-700">{role}</span>
+                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg">{roleShifts.length} shifts</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Coverage Heatmap */}
+            <div className="glass rounded-xl p-6 mt-6">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-purple-600" />
+                Coverage Heatmap
+              </h3>
+              <div className="grid grid-cols-7 gap-2">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => {
+                  const dayShifts = shifts.filter(s => new Date(s.date).getDay() === idx && !s.isTimeOff);
+                  const avgCoverage = dayShifts.length / 4;
+                  const intensity = Math.min(avgCoverage / 3, 1);
+                  return (
+                    <div key={day} className="text-center">
+                      <div className="text-xs font-bold text-slate-600 mb-2">{day}</div>
+                      <div className={`h-24 rounded-lg flex items-center justify-center font-bold transition-all`} style={{ 
+                        background: `linear-gradient(135deg, rgba(139, 92, 246, ${intensity * 0.7}) 0%, rgba(219, 39, 119, ${intensity * 0.7}) 100%)`
+                      }}>
+                        <span className="text-white text-lg">{dayShifts.length}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
