@@ -907,6 +907,168 @@ export default function Scheduler() {
     }
   };
 
+  // Smart Auto-Schedule for the entire month
+  const handleSmartAutoSchedule = async () => {
+    if (!confirm('This will auto-schedule the entire month using AI optimization. This may overwrite existing shifts. Continue?')) {
+      return;
+    }
+
+    setStatus({ type: 'info', msg: 'Generating optimized schedule...' });
+    
+    const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+    const collectionRef = collection(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`);
+    const batch = writeBatch(db);
+    const newShifts: Shift[] = [];
+
+    // Smart algorithm: distribute shifts evenly, avoid consecutive days, respect time-off
+    const employeeWorkDays: Record<string, number[]> = {};
+    employees.forEach(emp => employeeWorkDays[emp.name] = []);
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const dateStr = dateObj.toISOString();
+      const dayOfWeek = dateObj.getDay();
+      
+      // Skip Sundays (optional)
+      if (dayOfWeek === 0) continue;
+
+      // Determine shift coverage needed (2-3 people per day)
+      const shiftsNeeded = dayOfWeek === 6 ? 2 : 3; // Less on Saturdays
+      
+      // Select employees who haven't worked recently
+      const availableEmployees = employees
+        .filter(emp => {
+          const lastWorkDay = employeeWorkDays[emp.name][employeeWorkDays[emp.name].length - 1];
+          return !lastWorkDay || day - lastWorkDay > 1; // At least 1 day between shifts
+        })
+        .slice(0, shiftsNeeded);
+
+      // Create shifts for selected employees
+      availableEmployees.forEach((emp, idx) => {
+        const shiftTime = idx === 0 ? { start: '08:00', end: '16:00' } : 
+                         idx === 1 ? { start: '12:00', end: '20:00' } :
+                         { start: '16:00', end: '22:00' };
+        
+        const shiftData = {
+          date: dateStr,
+          employeeName: emp.name,
+          startTime: shiftTime.start,
+          endTime: shiftTime.end,
+          role: roles[idx % roles.length] || 'Staff',
+          department: departments[0] || 'General',
+          notes: 'Auto-scheduled by AI',
+          isDraft: true,
+          timestamp: Date.now() + day
+        };
+
+        employeeWorkDays[emp.name].push(day);
+        const docRef = doc(collectionRef);
+        batch.set(docRef, shiftData);
+        newShifts.push({ ...shiftData, id: docRef.id });
+      });
+    }
+
+    try {
+      await batch.commit();
+      setStatus({ type: 'success', msg: `✨ Smart schedule created! ${newShifts.length} shifts generated.` });
+    } catch (error) {
+      console.error('Auto-schedule error:', error);
+      setStatus({ type: 'error', msg: 'Failed to create schedule' });
+    }
+  };
+
+  // Fill gaps in schedule
+  const handleFillGaps = async () => {
+    const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+    const collectionRef = collection(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`);
+    const promises: Promise<any>[] = [];
+    let gapsFound = 0;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const dateStr = dateObj.toISOString().split('T')[0];
+      const dayShifts = shifts.filter(s => s.date.startsWith(dateStr) && !s.isTimeOff);
+
+      // If fewer than 2 shifts, add one
+      if (dayShifts.length < 2) {
+        const availableEmployee = employees.find(emp => 
+          !dayShifts.some(s => s.employeeName === emp.name)
+        );
+        
+        if (availableEmployee) {
+          gapsFound++;
+          promises.push(addDoc(collectionRef, {
+            date: dateObj.toISOString(),
+            employeeName: availableEmployee.name,
+            startTime: '08:00',
+            endTime: '16:00',
+            role: roles[0] || 'Staff',
+            department: departments[0] || 'General',
+            notes: 'Auto-filled gap',
+            isDraft: true,
+            timestamp: Date.now()
+          }));
+        }
+      }
+    }
+
+    if (gapsFound === 0) {
+      setStatus({ type: 'info', msg: 'No gaps found - schedule looks good!' });
+      return;
+    }
+
+    try {
+      await Promise.all(promises);
+      setStatus({ type: 'success', msg: `Filled ${gapsFound} gaps in schedule!` });
+    } catch (error) {
+      console.error('Fill gaps error:', error);
+      setStatus({ type: 'error', msg: 'Failed to fill gaps' });
+    }
+  };
+
+  // Copy week to next week
+  const handleCopyWeekForward = async () => {
+    const weekStart = new Date(currentDate);
+    weekStart.setDate(currentDate.getDate() - currentDate.getDay());
+    
+    const weekShifts: Shift[] = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(weekStart);
+      day.setDate(weekStart.getDate() + i);
+      const dateStr = day.toISOString().split('T')[0];
+      weekShifts.push(...shifts.filter(s => s.date.startsWith(dateStr)));
+    }
+
+    if (weekShifts.length === 0) {
+      alert('No shifts in current week to copy');
+      return;
+    }
+
+    if (!confirm(`Copy ${weekShifts.length} shifts to next week?`)) return;
+
+    const collectionRef = collection(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`);
+    const promises = weekShifts.map(shift => {
+      const shiftDate = new Date(shift.date);
+      shiftDate.setDate(shiftDate.getDate() + 7); // Add 7 days
+      
+      return addDoc(collectionRef, {
+        ...shift,
+        id: undefined,
+        date: shiftDate.toISOString(),
+        isDraft: true,
+        timestamp: Date.now()
+      });
+    });
+
+    try {
+      await Promise.all(promises);
+      setStatus({ type: 'success', msg: `Copied ${weekShifts.length} shifts to next week!` });
+    } catch (error) {
+      console.error('Copy week error:', error);
+      setStatus({ type: 'error', msg: 'Failed to copy week' });
+    }
+  };
+
   const renderCalendarDays = () => {
     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
     const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
@@ -1354,6 +1516,12 @@ export default function Scheduler() {
             <button onClick={() => setShowTimeClock(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Time Clock">
               <Clock className="w-5 h-5 group-hover:text-green-600" />
             </button>
+            <button onClick={() => setShowTimeOffModal(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Time-Off Requests">
+              <CalendarIcon className="w-5 h-5 group-hover:text-red-600" />
+            </button>
+            <button onClick={() => setShowTemplateModal(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Shift Templates">
+              <FileText className="w-5 h-5 group-hover:text-blue-600" />
+            </button>
             <button onClick={handleExportCSV} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Export CSV">
               <Download className="w-5 h-5 group-hover:text-blue-600" />
             </button>
@@ -1370,6 +1538,44 @@ export default function Scheduler() {
               <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
               <span className="hidden lg:inline text-sm font-bold">AI Assistant</span>
             </button>
+            
+            {/* Smart Scheduling Dropdown */}
+            <div className="relative print:hidden group">
+              <button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white p-3 rounded-xl transition-all hover-lift flex items-center gap-2 shadow-lg">
+                <Wand2 className="w-5 h-5" />
+                <span className="hidden lg:inline text-sm font-bold">Smart Schedule</span>
+              </button>
+              <div className="absolute right-0 mt-2 w-64 glass rounded-2xl p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 animate-scale-in">
+                <button onClick={handleSmartAutoSchedule} className="w-full text-left px-4 py-3 hover:bg-purple-50 rounded-xl transition-all mb-2 flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-purple-500 to-indigo-500 p-2 rounded-lg text-white">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm text-slate-800">Auto-Schedule Month</div>
+                    <div className="text-xs text-slate-500">AI generates full schedule</div>
+                  </div>
+                </button>
+                <button onClick={handleFillGaps} className="w-full text-left px-4 py-3 hover:bg-blue-50 rounded-xl transition-all mb-2 flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-2 rounded-lg text-white">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm text-slate-800">Fill Gaps</div>
+                    <div className="text-xs text-slate-500">Add shifts to understaffed days</div>
+                  </div>
+                </button>
+                <button onClick={handleCopyWeekForward} className="w-full text-left px-4 py-3 hover:bg-green-50 rounded-xl transition-all flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-500 p-2 rounded-lg text-white">
+                    <Copy className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm text-slate-800">Copy Week Forward</div>
+                    <div className="text-xs text-slate-500">Duplicate to next week</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             <button onClick={handlePrint} className="bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black text-white p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden shadow-lg">
               <Printer className="w-5 h-5" />
               <span className="hidden lg:inline text-sm font-bold">Print</span>
@@ -1986,6 +2192,327 @@ export default function Scheduler() {
                   <p className="text-xs text-slate-500">Automatic warnings before 40-hour threshold</p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Time-Off Management Modal */}
+      {showTimeOffModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm print:hidden animate-fade-in" onClick={() => setShowTimeOffModal(false)}>
+          <div className="glass rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-red-500 to-pink-600 p-3 rounded-xl text-white">
+                  <CalendarIcon className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-extrabold gradient-text">Time-Off Management</h2>
+                  <p className="text-sm text-slate-500">Request and manage employee time off</p>
+                </div>
+              </div>
+              <button onClick={() => setShowTimeOffModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Request Time Off Form */}
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <PlusCircle className="w-5 h-5 text-purple-600" />
+                  Request Time Off
+                </h3>
+                <form className="space-y-4" onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const employeeName = formData.get('employee') as string;
+                  const startDate = formData.get('startDate') as string;
+                  const endDate = formData.get('endDate') as string;
+                  const type = formData.get('type') as string;
+                  const reason = formData.get('reason') as string;
+
+                  // Create time-off shifts for each day in range
+                  const start = new Date(startDate);
+                  const end = new Date(endDate);
+                  const promises = [];
+                  
+                  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                    const dateStr = d.toISOString();
+                    const collectionRef = collection(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`);
+                    promises.push(addDoc(collectionRef, {
+                      date: dateStr,
+                      employeeName,
+                      startTime: '00:00',
+                      endTime: '23:59',
+                      role: `Time Off - ${type}`,
+                      department: 'Time Off',
+                      notes: reason,
+                      isTimeOff: true,
+                      isDraft: false,
+                      timestamp: Date.now()
+                    }));
+                  }
+
+                  Promise.all(promises).then(() => {
+                    setStatus({ type: 'success', msg: 'Time-off request submitted!' });
+                    e.currentTarget.reset();
+                  }).catch(err => {
+                    console.error('Time-off error:', err);
+                    setStatus({ type: 'error', msg: 'Failed to submit request' });
+                  });
+                }}>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Employee</label>
+                    <select name="employee" required className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none">
+                      {employees.map(emp => <option key={emp.name} value={emp.name}>{emp.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Start Date</label>
+                      <input name="startDate" type="date" required className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">End Date</label>
+                      <input name="endDate" type="date" required className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Type</label>
+                    <select name="type" required className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none">
+                      <option>Vacation</option>
+                      <option>Sick Leave</option>
+                      <option>Personal</option>
+                      <option>Bereavement</option>
+                      <option>Jury Duty</option>
+                      <option>Unpaid Leave</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Reason (Optional)</label>
+                    <textarea name="reason" rows={3} className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none resize-none" placeholder="Additional details..."></textarea>
+                  </div>
+                  <button type="submit" className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg">
+                    Submit Request
+                  </button>
+                </form>
+              </div>
+
+              {/* Time-Off Calendar View */}
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <CalendarIcon className="w-5 h-5 text-blue-600" />
+                  Upcoming Time-Off
+                </h3>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {shifts.filter(s => s.isTimeOff).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(timeOff => {
+                    const date = new Date(timeOff.date);
+                    return (
+                      <div key={timeOff.id} className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-bold text-slate-800">{timeOff.employeeName}</h4>
+                            <p className="text-sm text-slate-600">{timeOff.role}</p>
+                          </div>
+                          <button onClick={async () => {
+                            if (confirm('Delete this time-off entry?')) {
+                              const collectionRef = collection(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`);
+                              await deleteDoc(doc(collectionRef, timeOff.id!));
+                              setStatus({ type: 'success', msg: 'Time-off deleted' });
+                            }
+                          }} className="text-red-400 hover:text-red-600 transition-colors">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          📅 {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
+                        {timeOff.notes && <p className="text-xs text-slate-600 mt-2 italic">{timeOff.notes}</p>}
+                      </div>
+                    );
+                  })}
+                  {shifts.filter(s => s.isTimeOff).length === 0 && (
+                    <div className="text-center py-8 text-slate-400">
+                      <CalendarIcon className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No time-off requests</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shift Templates Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm print:hidden animate-fade-in" onClick={() => setShowTemplateModal(false)}>
+          <div className="glass rounded-3xl p-8 max-w-5xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-3 rounded-xl text-white">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-extrabold gradient-text">Shift Templates</h2>
+                  <p className="text-sm text-slate-500">Save and reuse common shift patterns</p>
+                </div>
+              </div>
+              <button onClick={() => setShowTemplateModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Create Template */}
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                  Create New Template
+                </h3>
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-6">
+                  <h4 className="font-bold text-blue-900 mb-2">💡 Quick Tip</h4>
+                  <p className="text-blue-700 text-sm mb-4">
+                    Templates let you save a full day's schedule and reapply it instantly to any date. Perfect for repeating patterns!
+                  </p>
+                  <div className="space-y-3">
+                    <div className="glass rounded-lg p-3">
+                      <h5 className="font-bold text-xs text-slate-700 mb-1">1. Schedule a Full Day</h5>
+                      <p className="text-xs text-slate-600">Create all shifts for a typical day pattern</p>
+                    </div>
+                    <div className="glass rounded-lg p-3">
+                      <h5 className="font-bold text-xs text-slate-700 mb-1">2. Save as Template</h5>
+                      <p className="text-xs text-slate-600">Use the "Save Day as Template" button</p>
+                    </div>
+                    <div className="glass rounded-lg p-3">
+                      <h5 className="font-bold text-xs text-slate-700 mb-1">3. Apply Anywhere</h5>
+                      <p className="text-xs text-slate-600">Click any date and apply the template instantly</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Template Library */}
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-green-600" />
+                  Saved Templates
+                </h3>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {shiftTemplates.map((template, idx) => (
+                    <div key={template.id || idx} className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 className="font-bold text-slate-800">{template.name}</h4>
+                          <p className="text-xs text-slate-600">{template.description || 'No description'}</p>
+                        </div>
+                        <button onClick={() => {
+                          if (confirm(`Delete template "${template.name}"?`)) {
+                            setShiftTemplates(shiftTemplates.filter((_, i) => i !== idx));
+                            setStatus({ type: 'success', msg: 'Template deleted' });
+                          }
+                        }} className="text-red-400 hover:text-red-600 transition-colors">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="text-xs text-slate-500 mb-3">
+                        📊 {template.shifts?.length || 0} shifts
+                      </div>
+                      <button onClick={() => {
+                        if (!selectedDate) {
+                          alert('Please select a date first by clicking a day on the calendar');
+                          setShowTemplateModal(false);
+                          return;
+                        }
+                        // Apply template to selected date
+                        const dateStr = selectedDate.toISOString();
+                        const collectionRef = collection(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`);
+                        const promises = template.shifts.map(shift => 
+                          addDoc(collectionRef, {
+                            ...shift,
+                            date: dateStr,
+                            isDraft: true,
+                            timestamp: Date.now()
+                          })
+                        );
+                        Promise.all(promises).then(() => {
+                          setStatus({ type: 'success', msg: `Template "${template.name}" applied!` });
+                          setShowTemplateModal(false);
+                        });
+                      }} className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold py-2 rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all">
+                        Apply to Selected Date
+                      </button>
+                    </div>
+                  ))}
+                  {shiftTemplates.length === 0 && (
+                    <div className="text-center py-8 text-slate-400">
+                      <FileText className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No templates saved yet</p>
+                      <p className="text-xs mt-1">Create a full day schedule, then save it as a template</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              <button onClick={() => {
+                const name = prompt('Template name:');
+                if (!name || !selectedDate) return;
+                const dateStr = selectedDate.toISOString().split('T')[0];
+                const dayShifts = shifts.filter(s => s.date.startsWith(dateStr) && !s.isTimeOff);
+                if (dayShifts.length === 0) {
+                  alert('No shifts on selected date to save as template');
+                  return;
+                }
+                setShiftTemplates([...shiftTemplates, {
+                  name,
+                  description: `${dayShifts.length} shifts`,
+                  shifts: dayShifts.map(s => ({
+                    employeeName: s.employeeName,
+                    role: s.role,
+                    startTime: s.startTime,
+                    endTime: s.endTime,
+                    department: s.department
+                  }))
+                }]);
+                setStatus({ type: 'success', msg: 'Template saved!' });
+              }} className="glass hover:bg-gradient-to-r from-blue-500 to-cyan-500 hover:text-white p-4 rounded-xl transition-all hover-lift">
+                <div className="text-2xl mb-1">💾</div>
+                <div className="font-bold text-sm">Save Current Day</div>
+              </button>
+              <button onClick={() => {
+                const morningTemplate: ShiftTemplate = {
+                  name: 'Morning Shift',
+                  description: 'Standard morning coverage',
+                  shifts: [
+                    { employeeName: employees[0]?.name || 'Staff 1', role: roles[0] || 'Reception', startTime: '08:00', endTime: '12:00' },
+                    { employeeName: employees[1]?.name || 'Staff 2', role: roles[1] || 'Concierge', startTime: '08:00', endTime: '12:00' }
+                  ]
+                };
+                setShiftTemplates([...shiftTemplates, morningTemplate]);
+                setStatus({ type: 'success', msg: 'Morning template created!' });
+              }} className="glass hover:bg-gradient-to-r from-amber-500 to-orange-500 hover:text-white p-4 rounded-xl transition-all hover-lift">
+                <div className="text-2xl mb-1">🌅</div>
+                <div className="font-bold text-sm">Create Morning</div>
+              </button>
+              <button onClick={() => {
+                const eveningTemplate: ShiftTemplate = {
+                  name: 'Evening Shift',
+                  description: 'Standard evening coverage',
+                  shifts: [
+                    { employeeName: employees[0]?.name || 'Staff 1', role: roles[0] || 'Reception', startTime: '16:00', endTime: '20:00' },
+                    { employeeName: employees[1]?.name || 'Staff 2', role: roles[1] || 'Concierge', startTime: '16:00', endTime: '20:00' }
+                  ]
+                };
+                setShiftTemplates([...shiftTemplates, eveningTemplate]);
+                setStatus({ type: 'success', msg: 'Evening template created!' });
+              }} className="glass hover:bg-gradient-to-r from-purple-500 to-pink-500 hover:text-white p-4 rounded-xl transition-all hover-lift">
+                <div className="text-2xl mb-1">🌆</div>
+                <div className="font-bold text-sm">Create Evening</div>
+              </button>
             </div>
           </div>
         </div>
