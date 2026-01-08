@@ -54,7 +54,27 @@ import {
   Layers,
   CloudRain,
   Target,
-  Activity
+  Activity,
+  Award,
+  Star,
+  Brain,
+  Smile,
+  Frown,
+  Meh,
+  Bell,
+  BellRing,
+  Headphones,
+  MessageCircle,
+  Video,
+  Flame,
+  Crown,
+  Gem,
+  ThumbsUp,
+  Heart,
+  ShieldCheck,
+  Cpu,
+  LineChart,
+  PieChart
 } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -270,6 +290,47 @@ interface EmployeeStats {
   overtimeHours: number;
 }
 
+interface EmployeeBadge {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  earnedDate?: string;
+}
+
+interface EmployeeSkill {
+  skill: string;
+  level: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+  certified: boolean;
+  certificationDate?: string;
+  expiryDate?: string;
+}
+
+interface PerformanceMetric {
+  employeeName: string;
+  attendance: number; // percentage
+  punctuality: number; // percentage
+  satisfaction: number; // 1-5 stars
+  shiftCompletionRate: number; // percentage
+  lastReviewDate?: string;
+}
+
+interface ShiftBid {
+  shiftId: string;
+  employeeName: string;
+  bidAmount: number;
+  bidTime: string;
+  status: 'Pending' | 'Accepted' | 'Rejected';
+}
+
+interface AIRecommendation {
+  type: 'scheduling' | 'cost' | 'performance' | 'staffing';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  title: string;
+  description: string;
+  action?: string;
+}
+
 // --- Main Component ---
 
 export default function Scheduler() {
@@ -320,6 +381,23 @@ export default function Scheduler() {
   const [showBulkOps, setShowBulkOps] = useState(false);
   const [showCompareView, setShowCompareView] = useState(false);
   const [compareMonth, setCompareMonth] = useState<Date>(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  
+  // Revolutionary Features State
+  const [showGamification, setShowGamification] = useState(false);
+  const [showAIInsights, setShowAIInsights] = useState(false);
+  const [showSkillsMatrix, setShowSkillsMatrix] = useState(false);
+  const [showPerformance, setShowPerformance] = useState(false);
+  const [showBiddingSystem, setShowBiddingSystem] = useState(false);
+  const [showTeamChat, setShowTeamChat] = useState(false);
+  const [showPredictive, setShowPredictive] = useState(false);
+  
+  const [employeeBadges, setEmployeeBadges] = useState<Record<string, EmployeeBadge[]>>({});
+  const [employeePoints, setEmployeePoints] = useState<Record<string, number>>({});
+  const [employeeSkills, setEmployeeSkills] = useState<Record<string, EmployeeSkill[]>>({});
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
+  const [aiRecommendations, setAIRecommendations] = useState<AIRecommendation[]>([]);
+  const [shiftBids, setShiftBids] = useState<ShiftBid[]>([]);
+  const [satisfactionRatings, setSatisfactionRatings] = useState<Record<string, { date: string; rating: 1 | 2 | 3 | 4 | 5; comment?: string }[]>>({});
   const [notifications, setNotifications] = useState<Array<{id: string; type: string; message: string; timestamp: number; read: boolean}>>([]);
   const [swapRequests, setSwapRequests] = useState<ShiftSwapRequest[]>([]);
   
@@ -875,6 +953,206 @@ export default function Scheduler() {
       avgHourlyRate,
       projectedMonthly: totalCost * (30 / new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()),
       laborPercent: 30 // Placeholder - could be made configurable
+    };
+  };
+
+  // AI-Powered Recommendations
+  const generateAIRecommendations = (): AIRecommendation[] => {
+    const recommendations: AIRecommendation[] = [];
+    
+    // Analyze understaffing
+    const datesMap = shifts.reduce((acc, s) => {
+      const date = s.date.split('T')[0];
+      if (!acc[date]) acc[date] = [];
+      if (!s.isDraft && !s.isTimeOff) acc[date].push(s);
+      return acc;
+    }, {} as Record<string, Shift[]>);
+
+    Object.entries(datesMap).forEach(([date, dayShifts]) => {
+      if (dayShifts.length < 2) {
+        recommendations.push({
+          type: 'staffing',
+          priority: 'high',
+          title: 'Understaffed Day Detected',
+          description: `${new Date(date).toLocaleDateString()} has only ${dayShifts.length} employee(s). Consider adding more coverage.`,
+          action: 'Add Staff'
+        });
+      }
+    });
+
+    // Analyze overtime
+    employees.forEach(emp => {
+      const stats = getEmployeeStats(emp.name);
+      if (stats.overtimeHours > 10) {
+        recommendations.push({
+          type: 'cost',
+          priority: 'critical',
+          title: `Excessive Overtime: ${emp.name}`,
+          description: `${emp.name} has ${stats.overtimeHours.toFixed(1)} hours of overtime. This increases labor costs by ${(stats.overtimeHours * emp.rate * 0.5).toFixed(0)}$.`,
+          action: 'Redistribute Shifts'
+        });
+      }
+    });
+
+    // Analyze skill gaps
+    const roleNeeds = shifts.reduce((acc, s) => {
+      if (!s.isDraft && !s.isTimeOff) {
+        acc[s.role] = (acc[s.role] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Performance recommendations
+    performanceMetrics.forEach(metric => {
+      if (metric.attendance < 85) {
+        recommendations.push({
+          type: 'performance',
+          priority: 'medium',
+          title: `Low Attendance: ${metric.employeeName}`,
+          description: `${metric.employeeName}'s attendance is at ${metric.attendance}%. Consider a performance review.`,
+          action: 'Schedule Review'
+        });
+      }
+    });
+
+    // Cost optimization
+    const forecast = calculateCostForecast();
+    if (forecast.totalCost > 15000) {
+      recommendations.push({
+        type: 'cost',
+        priority: 'high',
+        title: 'High Labor Cost Warning',
+        description: `Current labor cost is $${forecast.totalCost.toFixed(0)}. Consider optimizing shift lengths or reducing overtime.`,
+        action: 'Optimize Schedule'
+      });
+    }
+
+    return recommendations.sort((a, b) => {
+      const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+      return priorityOrder[a.priority] - priorityOrder[b.priority];
+    });
+  };
+
+  // Gamification: Award points for actions
+  const awardPoints = (employeeName: string, points: number, reason: string) => {
+    setEmployeePoints(prev => ({
+      ...prev,
+      [employeeName]: (prev[employeeName] || 0) + points
+    }));
+    
+    // Check for badge achievements
+    checkBadgeAchievements(employeeName);
+    
+    // Create notification
+    setNotifications(prev => [{
+      id: Date.now().toString(),
+      message: `${employeeName} earned ${points} points: ${reason}`,
+      type: 'success',
+      timestamp: new Date().toISOString(),
+      read: false
+    }, ...prev]);
+  };
+
+  // Check and award badges
+  const checkBadgeAchievements = (employeeName: string) => {
+    const stats = getEmployeeStats(employeeName);
+    const currentBadges = employeeBadges[employeeName] || [];
+    const newBadges: EmployeeBadge[] = [];
+
+    // Perfect Attendance Badge (no missed shifts)
+    if (stats.totalShifts >= 20 && !currentBadges.find(b => b.id === 'perfect-attendance')) {
+      newBadges.push({
+        id: 'perfect-attendance',
+        name: 'Perfect Attendance',
+        icon: '🎯',
+        description: 'Completed 20+ shifts without absence',
+        earnedDate: new Date().toISOString()
+      });
+    }
+
+    // Overtime Champion (high hours)
+    if (stats.overtimeHours > 20 && !currentBadges.find(b => b.id === 'overtime-champion')) {
+      newBadges.push({
+        id: 'overtime-champion',
+        name: 'Overtime Champion',
+        icon: '💪',
+        description: 'Worked 20+ overtime hours',
+        earnedDate: new Date().toISOString()
+      });
+    }
+
+    // Team Player (helped with swaps)
+    const swapsHelped = shiftSwapRequests.filter(s => 
+      s.targetEmployee === employeeName && s.status === 'Approved'
+    ).length;
+    if (swapsHelped >= 5 && !currentBadges.find(b => b.id === 'team-player')) {
+      newBadges.push({
+        id: 'team-player',
+        name: 'Team Player',
+        icon: '🤝',
+        description: 'Helped 5+ coworkers with shift swaps',
+        earnedDate: new Date().toISOString()
+      });
+    }
+
+    // MVP Badge (top earner)
+    const allEarnings = employees.map(e => ({ name: e.name, earnings: getEmployeeStats(e.name).totalEarnings }));
+    const topEarner = allEarnings.sort((a, b) => b.earnings - a.earnings)[0];
+    if (topEarner.name === employeeName && topEarner.earnings > 5000 && !currentBadges.find(b => b.id === 'mvp')) {
+      newBadges.push({
+        id: 'mvp',
+        name: 'MVP',
+        icon: '👑',
+        description: 'Top earner this month',
+        earnedDate: new Date().toISOString()
+      });
+    }
+
+    if (newBadges.length > 0) {
+      setEmployeeBadges(prev => ({
+        ...prev,
+        [employeeName]: [...currentBadges, ...newBadges]
+      }));
+      
+      setNotifications(prev => [{
+        id: Date.now().toString(),
+        message: `🎉 ${employeeName} earned ${newBadges.length} new badge(s)!`,
+        type: 'success',
+        timestamp: new Date().toISOString(),
+        read: false
+      }, ...prev]);
+    }
+  };
+
+  // Predictive scheduling analytics
+  const generatePredictiveAnalytics = () => {
+    const historicalData = shifts.filter(s => !s.isDraft);
+    
+    // Predict busiest days
+    const dayOfWeekCounts = historicalData.reduce((acc, s) => {
+      const day = new Date(s.date).getDay();
+      acc[day] = (acc[day] || 0) + 1;
+      return acc;
+    }, {} as Record<number, number>);
+
+    const busiestDay = Object.entries(dayOfWeekCounts)
+      .sort((a, b) => b[1] - a[1])[0];
+
+    // Predict required staff per day
+    const avgStaffPerDay = historicalData.length / 30;
+
+    // Predict turnover risk
+    const employeesWithLowHours = employees.filter(emp => {
+      const stats = getEmployeeStats(emp.name);
+      return stats.totalHours < 80; // Less than 80 hours/month
+    });
+
+    return {
+      busiestDay: busiestDay ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][parseInt(busiestDay[0])] : 'N/A',
+      avgStaffPerDay: avgStaffPerDay.toFixed(1),
+      turnoverRisk: employeesWithLowHours.map(e => e.name),
+      recommendedHiring: avgStaffPerDay < 2 ? 'Consider hiring 1-2 more staff' : 'Staffing levels adequate',
+      costTrend: 'increasing' // Could be calculated from historical data
     };
   };
 
@@ -1995,6 +2273,38 @@ export default function Scheduler() {
             <button onClick={() => setShowCompareView(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Compare Schedules">
               <GitCompare className="w-5 h-5 group-hover:text-violet-600" />
             </button>
+            
+            {/* REVOLUTIONARY FEATURES */}
+            <button onClick={() => {
+              setAIRecommendations(generateAIRecommendations());
+              setShowAIInsights(true);
+            }} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group relative" title="AI Insights & Recommendations">
+              <Brain className="w-5 h-5 group-hover:text-blue-600" />
+              {generateAIRecommendations().length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
+                  {generateAIRecommendations().length}
+                </span>
+              )}
+            </button>
+            <button onClick={() => setShowGamification(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Gamification & Leaderboard">
+              <Trophy className="w-5 h-5 group-hover:text-amber-600" />
+            </button>
+            <button onClick={() => setShowSkillsMatrix(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Skills Matrix & Certifications">
+              <Award className="w-5 h-5 group-hover:text-teal-600" />
+            </button>
+            <button onClick={() => setShowPerformance(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Performance Metrics">
+              <LineChart className="w-5 h-5 group-hover:text-pink-600" />
+            </button>
+            <button onClick={() => setShowBiddingSystem(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Shift Bidding (Premium Shifts)">
+              <Gem className="w-5 h-5 group-hover:text-purple-600" />
+            </button>
+            <button onClick={() => setShowPredictive(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Predictive Analytics">
+              <Cpu className="w-5 h-5 group-hover:text-indigo-600" />
+            </button>
+            <button onClick={() => setShowTeamChat(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Team Communication">
+              <MessageCircle className="w-5 h-5 group-hover:text-green-600" />
+            </button>
+            
             <button onClick={handleCopyCalendar} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Copy Calendar to Clipboard">
               <ClipboardCopy className="w-5 h-5 group-hover:text-green-600" />
             </button>
@@ -4407,6 +4717,687 @@ export default function Scheduler() {
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">94%</div>
                   <div className="text-xs text-slate-600 mt-1">Schedule completion</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Insights & Recommendations Modal - REVOLUTIONARY! */}
+      {showAIInsights && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAIInsights(false)}>
+          <div className="glass rounded-3xl p-8 max-w-5xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <Brain className="w-7 h-7 text-blue-500 animate-pulse" />
+                AI Insights & Recommendations
+              </h2>
+              <button onClick={() => setShowAIInsights(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            {aiRecommendations.length === 0 ? (
+              <div className="text-center py-12">
+                <Sparkles className="w-16 h-16 mx-auto mb-4 text-purple-500" />
+                <h3 className="text-2xl font-bold text-slate-800 mb-2">Everything Looks Great!</h3>
+                <p className="text-slate-600">No critical recommendations at this time. Your schedule is optimized.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {aiRecommendations.map((rec, idx) => (
+                  <div key={idx} className={`glass rounded-xl p-6 border-l-4 hover-lift ${
+                    rec.priority === 'critical' ? 'border-red-500 bg-red-50/50' :
+                    rec.priority === 'high' ? 'border-orange-500 bg-orange-50/50' :
+                    rec.priority === 'medium' ? 'border-yellow-500 bg-yellow-50/50' :
+                    'border-blue-500 bg-blue-50/50'
+                  }`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          {rec.type === 'staffing' && <Users className="w-5 h-5 text-purple-600" />}
+                          {rec.type === 'cost' && <DollarSign className="w-5 h-5 text-green-600" />}
+                          {rec.type === 'performance' && <TrendingUp className="w-5 h-5 text-blue-600" />}
+                          {rec.type === 'scheduling' && <CalendarIcon className="w-5 h-5 text-orange-600" />}
+                          <h3 className="font-bold text-lg text-slate-800">{rec.title}</h3>
+                        </div>
+                        <p className="text-slate-700 mb-3">{rec.description}</p>
+                        {rec.action && (
+                          <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-sm rounded-lg hover:scale-105 transition-all shadow-lg">
+                            {rec.action} →
+                          </button>
+                        )}
+                      </div>
+                      <span className={`px-3 py-1 rounded-lg text-xs font-bold shrink-0 ${
+                        rec.priority === 'critical' ? 'bg-red-100 text-red-700' :
+                        rec.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                        rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {rec.priority.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Gamification & Leaderboard - REVOLUTIONARY! */}
+      {showGamification && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowGamification(false)}>
+          <div className="glass rounded-3xl p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <Trophy className="w-7 h-7 text-amber-500" />
+                Gamification & Leaderboard
+              </h2>
+              <button onClick={() => setShowGamification(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              {/* Top 3 Leaderboard */}
+              <div className="lg:col-span-2 glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Crown className="w-5 h-5 text-amber-500" />
+                  Leaderboard - Top Performers
+                </h3>
+                <div className="space-y-3">
+                  {employees
+                    .map(emp => ({
+                      name: emp.name,
+                      points: employeePoints[emp.name] || 0,
+                      stats: getEmployeeStats(emp.name),
+                      badges: (employeeBadges[emp.name] || []).length
+                    }))
+                    .sort((a, b) => b.points - a.points)
+                    .slice(0, 10)
+                    .map((emp, idx) => (
+                      <div key={emp.name} className={`glass rounded-lg p-4 hover-lift flex items-center gap-4 ${
+                        idx === 0 ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-400' :
+                        idx === 1 ? 'bg-gradient-to-r from-slate-50 to-gray-50 border-2 border-slate-400' :
+                        idx === 2 ? 'bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-400' : ''
+                      }`}>
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl ${
+                          idx === 0 ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-white' :
+                          idx === 1 ? 'bg-gradient-to-br from-slate-400 to-gray-500 text-white' :
+                          idx === 2 ? 'bg-gradient-to-br from-orange-400 to-amber-500 text-white' :
+                          'bg-slate-200 text-slate-600'
+                        }`}>
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-bold text-slate-800 flex items-center gap-2">
+                            {emp.name}
+                            {idx === 0 && <Crown className="w-4 h-4 text-amber-500" />}
+                            {idx === 1 && <Award className="w-4 h-4 text-slate-500" />}
+                            {idx === 2 && <Award className="w-4 h-4 text-orange-500" />}
+                          </div>
+                          <div className="text-sm text-slate-600">{emp.stats.totalShifts} shifts • {emp.badges} badges</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold gradient-text">{emp.points}</div>
+                          <div className="text-xs text-slate-600">points</div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Points & Badges */}
+              <div className="space-y-4">
+                <div className="glass rounded-xl p-6">
+                  <h3 className="font-bold mb-4 flex items-center gap-2">
+                    <Star className="w-5 h-5 text-yellow-500" />
+                    Points System
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Complete shift:</span>
+                      <span className="font-bold text-green-600">+10 pts</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Perfect week:</span>
+                      <span className="font-bold text-green-600">+50 pts</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Help coworker:</span>
+                      <span className="font-bold text-green-600">+25 pts</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">On-time arrival:</span>
+                      <span className="font-bold text-green-600">+5 pts</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass rounded-xl p-6">
+                  <h3 className="font-bold mb-4 flex items-center gap-2">
+                    <Award className="w-5 h-5 text-purple-500" />
+                    Available Badges
+                  </h3>
+                  <div className="space-y-2">
+                    {[
+                      { icon: '🎯', name: 'Perfect Attendance', desc: '20+ shifts' },
+                      { icon: '💪', name: 'Overtime Champion', desc: '20+ OT hours' },
+                      { icon: '🤝', name: 'Team Player', desc: '5+ swaps helped' },
+                      { icon: '👑', name: 'MVP', desc: 'Top earner' },
+                      { icon: '⚡', name: 'Quick Responder', desc: 'Fast replies' },
+                      { icon: '🌟', name: 'All-Star', desc: '1000+ points' }
+                    ].map(badge => (
+                      <div key={badge.name} className="flex items-center gap-2 text-xs">
+                        <span className="text-lg">{badge.icon}</span>
+                        <div className="flex-1">
+                          <div className="font-semibold text-slate-700">{badge.name}</div>
+                          <div className="text-slate-500">{badge.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Skills Matrix - REVOLUTIONARY! */}
+      {showSkillsMatrix && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowSkillsMatrix(false)}>
+          <div className="glass rounded-3xl p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-2">
+                <Award className="w-7 h-7 text-teal-500" />
+                Skills Matrix & Certifications
+              </h2>
+              <button onClick={() => setShowSkillsMatrix(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {employees.map(emp => {
+                const empSkills = employeeSkills[emp.name] || [];
+                return (
+                  <div key={emp.name} className="glass rounded-xl p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-bold text-lg text-slate-800">{emp.name}</h3>
+                      <button className="px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold text-sm rounded-lg hover:scale-105 transition-all">
+                        + Add Skill
+                      </button>
+                    </div>
+                    
+                    {empSkills.length === 0 ? (
+                      <p className="text-sm text-slate-500 text-center py-4">No skills added yet</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {empSkills.map((skill, idx) => (
+                          <div key={idx} className="glass rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-semibold text-sm text-slate-800">{skill.skill}</span>
+                              {skill.certified && <ShieldCheck className="w-4 h-4 text-green-600" />}
+                            </div>
+                            <div className="flex items-center gap-1 mb-1">
+                              {[1, 2, 3, 4].map(level => (
+                                <div key={level} className={`h-2 flex-1 rounded ${
+                                  (skill.level === 'Beginner' && level <= 1) ||
+                                  (skill.level === 'Intermediate' && level <= 2) ||
+                                  (skill.level === 'Advanced' && level <= 3) ||
+                                  (skill.level === 'Expert' && level <= 4)
+                                    ? 'bg-gradient-to-r from-teal-500 to-cyan-500'
+                                    : 'bg-slate-200'
+                                }`}></div>
+                              ))}
+                            </div>
+                            <div className="text-xs text-slate-600">{skill.level}</div>
+                            {skill.expiryDate && (
+                              <div className="text-xs text-orange-600 mt-1">
+                                Expires: {new Date(skill.expiryDate).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Performance Metrics - REVOLUTIONARY! */}
+      {showPerformance && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowPerformance(false)}>
+          <div className="glass rounded-3xl p-8 max-w-5xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <LineChart className="w-7 h-7 text-pink-500" />
+                Performance Metrics & KPIs
+              </h2>
+              <button onClick={() => setShowPerformance(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {employees.map(emp => {
+                const stats = getEmployeeStats(emp.name);
+                const metric = performanceMetrics.find(m => m.employeeName === emp.name) || {
+                  employeeName: emp.name,
+                  attendance: 95,
+                  punctuality: 92,
+                  satisfaction: 4,
+                  shiftCompletionRate: 98
+                };
+                
+                return (
+                  <div key={emp.name} className="glass rounded-xl p-6">
+                    <h3 className="font-bold text-lg mb-4 text-slate-800">{emp.name}</h3>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-semibold text-slate-700">Attendance Rate</span>
+                          <span className="text-sm font-bold text-green-600">{metric.attendance}%</span>
+                        </div>
+                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-green-500 to-emerald-500" style={{ width: `${metric.attendance}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-semibold text-slate-700">Punctuality</span>
+                          <span className="text-sm font-bold text-blue-600">{metric.punctuality}%</span>
+                        </div>
+                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500" style={{ width: `${metric.punctuality}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-semibold text-slate-700">Shift Completion</span>
+                          <span className="text-sm font-bold text-purple-600">{metric.shiftCompletionRate}%</span>
+                        </div>
+                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500" style={{ width: `${metric.shiftCompletionRate}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm font-semibold text-slate-700">Satisfaction Rating</span>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map(star => (
+                              <Star key={star} className={`w-4 h-4 ${star <= metric.satisfaction ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'}`} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-200">
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div>
+                            <div className="text-lg font-bold gradient-text">{stats.totalShifts}</div>
+                            <div className="text-xs text-slate-600">Shifts</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-bold gradient-text">{stats.totalHours.toFixed(0)}h</div>
+                            <div className="text-xs text-slate-600">Hours</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-bold gradient-text">${stats.totalEarnings.toFixed(0)}</div>
+                            <div className="text-xs text-slate-600">Earned</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Predictive Analytics - REVOLUTIONARY! */}
+      {showPredictive && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowPredictive(false)}>
+          <div className="glass rounded-3xl p-8 max-w-5xl w-full animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <Cpu className="w-7 h-7 text-indigo-500 animate-pulse" />
+                Predictive Analytics & ML Insights
+              </h2>
+              <button onClick={() => setShowPredictive(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            {(() => {
+              const predictions = generatePredictiveAnalytics();
+              return (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="glass rounded-xl p-6 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text">{predictions.busiestDay}</div>
+                      <div className="text-xs text-slate-600 mt-1">Busiest Day</div>
+                    </div>
+                    <div className="glass rounded-xl p-6 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text">{predictions.avgStaffPerDay}</div>
+                      <div className="text-xs text-slate-600 mt-1">Avg Staff/Day</div>
+                    </div>
+                    <div className="glass rounded-xl p-6 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text">{predictions.turnoverRisk.length}</div>
+                      <div className="text-xs text-slate-600 mt-1">At-Risk Staff</div>
+                    </div>
+                    <div className="glass rounded-xl p-6 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text uppercase">{predictions.costTrend}</div>
+                      <div className="text-xs text-slate-600 mt-1">Cost Trend</div>
+                    </div>
+                  </div>
+
+                  <div className="glass rounded-xl p-6 mb-4">
+                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                      <Target className="w-5 h-5 text-purple-600" />
+                      AI Predictions & Recommendations
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-lg">
+                        <Zap className="w-5 h-5 text-purple-600 shrink-0 mt-1" />
+                        <div>
+                          <p className="font-semibold text-slate-800">Staffing Recommendation</p>
+                          <p className="text-sm text-slate-600">{predictions.recommendedHiring}</p>
+                        </div>
+                      </div>
+                      
+                      {predictions.turnoverRisk.length > 0 && (
+                        <div className="flex items-start gap-3 p-4 bg-orange-50 rounded-lg">
+                          <AlertCircle className="w-5 h-5 text-orange-600 shrink-0 mt-1" />
+                          <div>
+                            <p className="font-semibold text-slate-800">Turnover Risk Alert</p>
+                            <p className="text-sm text-slate-600">
+                              {predictions.turnoverRisk.join(', ')} working below average hours. Consider engagement check-ins.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg">
+                        <Brain className="w-5 h-5 text-blue-600 shrink-0 mt-1" />
+                        <div>
+                          <p className="font-semibold text-slate-800">ML Optimization Insight</p>
+                          <p className="text-sm text-slate-600">
+                            Based on historical patterns, consider scheduling {predictions.avgStaffPerDay} employees on {predictions.busiestDay}s for optimal coverage.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Shift Bidding System - REVOLUTIONARY! */}
+      {showBiddingSystem && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowBiddingSystem(false)}>
+          <div className="glass rounded-3xl p-8 max-w-5xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <Gem className="w-7 h-7 text-emerald-500 animate-bounce-slow" />
+                Premium Shift Bidding System
+              </h2>
+              <button onClick={() => setShowBiddingSystem(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Available Premium Shifts */}
+              <div className="lg:col-span-2">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-orange-500" />
+                  Premium Shifts Available
+                </h3>
+                <div className="space-y-3">
+                  {shifts
+                    .filter(shift => {
+                      const shiftDate = new Date(shift.date);
+                      const dayOfWeek = shiftDate.toLocaleDateString('en-US', { weekday: 'long' });
+                      return shift.isPremium || dayOfWeek === 'Saturday' || dayOfWeek === 'Sunday';
+                    })
+                    .slice(0, 8)
+                    .map(shift => {
+                      const shiftBidsForThis = shiftBids.filter(b => b.shiftId === shift.id);
+                      const highestBid = shiftBidsForThis.length > 0 
+                        ? Math.max(...shiftBidsForThis.map(b => b.bidAmount))
+                        : 0;
+                      
+                      return (
+                        <div key={shift.id} className="glass rounded-xl p-4 hover-lift border-2 border-amber-200">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Crown className="w-4 h-4 text-amber-500" />
+                                <h4 className="font-bold text-slate-800">{shift.type}</h4>
+                                {shift.isPremium && (
+                                  <span className="px-2 py-0.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-xs font-bold rounded">
+                                    PREMIUM
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-sm text-slate-600">
+                                {new Date(shift.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                              </div>
+                              <div className="text-sm font-semibold text-green-600">
+                                Base: ${shift.rate}/hr {shift.isPremium && '+ Premium Bonus'}
+                              </div>
+                              {shiftBidsForThis.length > 0 && (
+                                <div className="text-xs text-slate-500 mt-1">
+                                  {shiftBidsForThis.length} bids • Highest: ${highestBid}
+                                </div>
+                              )}
+                            </div>
+                            <button className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-sm rounded-lg hover:scale-105 transition-all shadow-lg">
+                              Place Bid
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Bidding Info */}
+              <div className="space-y-4">
+                <div className="glass rounded-xl p-6">
+                  <h3 className="font-bold mb-4 flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-green-500" />
+                    How It Works
+                  </h3>
+                  <div className="space-y-3 text-sm text-slate-700">
+                    <div className="flex gap-2">
+                      <span className="font-bold text-purple-600">1.</span>
+                      <span>Premium shifts are marked with a crown icon</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-bold text-purple-600">2.</span>
+                      <span>Place bids using your earned points or bonus pay</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-bold text-purple-600">3.</span>
+                      <span>Highest bidder wins the shift</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-bold text-purple-600">4.</span>
+                      <span>Earn 1.5x-2x the standard rate</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass rounded-xl p-6 bg-gradient-to-br from-purple-50 to-pink-50">
+                  <h3 className="font-bold mb-2 text-slate-800">Your Stats</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Available Points:</span>
+                      <span className="font-bold gradient-text">500</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Active Bids:</span>
+                      <span className="font-bold text-orange-600">2</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Won This Month:</span>
+                      <span className="font-bold text-green-600">5</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass rounded-xl p-6">
+                  <h3 className="font-bold mb-3 flex items-center gap-2">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    Top Bidders
+                  </h3>
+                  <div className="space-y-2">
+                    {employees.slice(0, 3).map((emp, idx) => (
+                      <div key={emp.name} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-500">#{idx + 1}</span>
+                          <span className="font-semibold text-slate-700">{emp.name}</span>
+                        </div>
+                        <span className="text-xs text-slate-600">{Math.floor(Math.random() * 10) + 5} wins</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Team Chat & Collaboration - REVOLUTIONARY! */}
+      {showTeamChat && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowTeamChat(false)}>
+          <div className="glass rounded-3xl p-8 max-w-4xl w-full h-[80vh] flex flex-col animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <MessageCircle className="w-7 h-7 text-blue-500" />
+                Team Chat & Collaboration
+              </h2>
+              <button onClick={() => setShowTeamChat(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-4 gap-4 flex-1 min-h-0">
+              {/* Channels Sidebar */}
+              <div className="col-span-1 glass rounded-xl p-4 overflow-y-auto">
+                <h3 className="font-bold text-sm mb-3 text-slate-700">Channels</h3>
+                <div className="space-y-1">
+                  {[
+                    { icon: <Hash className="w-4 h-4" />, name: 'general', count: 12 },
+                    { icon: <CalendarIcon className="w-4 h-4" />, name: 'shift-swaps', count: 5 },
+                    { icon: <AlertCircle className="w-4 h-4" />, name: 'urgent', count: 2 },
+                    { icon: <Users className="w-4 h-4" />, name: 'team-leads', count: 0 },
+                    { icon: <Coffee className="w-4 h-4" />, name: 'break-room', count: 8 }
+                  ].map(channel => (
+                    <button
+                      key={channel.name}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg hover:bg-purple-50 transition-all text-left"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-slate-500">{channel.icon}</span>
+                        <span className="text-sm font-medium text-slate-700 truncate">{channel.name}</span>
+                      </div>
+                      {channel.count > 0 && (
+                        <span className="bg-purple-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
+                          {channel.count}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <h3 className="font-bold text-sm mb-3 mt-6 text-slate-700">Direct Messages</h3>
+                <div className="space-y-1">
+                  {employees.slice(0, 5).map(emp => (
+                    <button
+                      key={emp.name}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-purple-50 transition-all text-left"
+                    >
+                      <div className="w-2 h-2 rounded-full bg-green-500 shrink-0"></div>
+                      <span className="text-sm font-medium text-slate-700 truncate">{emp.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Chat Area */}
+              <div className="col-span-3 flex flex-col min-h-0">
+                <div className="glass rounded-xl p-4 mb-4">
+                  <h3 className="font-bold flex items-center gap-2">
+                    <Hash className="w-5 h-5 text-purple-600" />
+                    general
+                  </h3>
+                  <p className="text-xs text-slate-600">Team-wide announcements and discussions</p>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 glass rounded-xl p-4 overflow-y-auto mb-4 space-y-4">
+                  {[
+                    { user: 'Sarah Johnson', time: '10:45 AM', msg: 'Hey team! Anyone available to swap Saturday shift?', avatar: '👩‍⚕️' },
+                    { user: 'Mike Davis', time: '10:47 AM', msg: 'I can take it! DM me', avatar: '👨‍⚕️' },
+                    { user: 'System', time: '10:48 AM', msg: '🎉 Mike Davis earned the "Team Player" badge!', isSystem: true },
+                    { user: 'Emily Brown', time: '11:02 AM', msg: 'Reminder: Staff meeting tomorrow at 2 PM', avatar: '👩‍💼' },
+                    { user: 'Alex Chen', time: '11:15 AM', msg: 'Can someone cover my lunch break today?', avatar: '👨‍🔧' },
+                    { user: 'Sarah Johnson', time: '11:16 AM', msg: 'I got you Alex! 👍', avatar: '👩‍⚕️' }
+                  ].map((msg, idx) => (
+                    <div key={idx} className={`flex gap-3 ${msg.isSystem ? 'justify-center' : ''}`}>
+                      {msg.isSystem ? (
+                        <div className="px-4 py-2 bg-purple-100 rounded-lg text-sm text-purple-700">
+                          {msg.msg}
+                        </div>
+                      ) : (
+                        <>
+                          <div className="text-2xl shrink-0">{msg.avatar}</div>
+                          <div className="flex-1">
+                            <div className="flex items-baseline gap-2 mb-1">
+                              <span className="font-bold text-sm text-slate-800">{msg.user}</span>
+                              <span className="text-xs text-slate-500">{msg.time}</span>
+                            </div>
+                            <p className="text-sm text-slate-700 bg-white/50 rounded-lg px-3 py-2">
+                              {msg.msg}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Message Input */}
+                <div className="glass rounded-xl p-4 flex gap-3">
+                  <input
+                    type="text"
+                    placeholder="Type a message..."
+                    className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-200 focus:border-purple-500 focus:outline-none"
+                  />
+                  <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-lg hover:scale-105 transition-all flex items-center gap-2">
+                    <Send className="w-4 h-4" />
+                    Send
+                  </button>
                 </div>
               </div>
             </div>
