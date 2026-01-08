@@ -108,3 +108,5 @@ This is a personal project. Feel free to fork and customize for your needs!
 ## License
 
 MIT License - feel free to use this project however you'd like.
+
+<!-- Deployment trigger -->
