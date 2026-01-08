@@ -6464,3 +6464,5 @@ export default function Scheduler() {
     </div>
   );
 }
+
+export default Scheduler;
