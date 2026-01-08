@@ -41,7 +41,13 @@ import {
   Camera,
   Grip,
   FileText,
-  ClipboardCopy
+  ClipboardCopy,
+  Moon,
+  Sun,
+  Keyboard,
+  Coffee,
+  TrendingUp,
+  Zap
 } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -236,6 +242,25 @@ interface Shift {
   isRecurring?: boolean;
   recurringId?: string;
   recurringPattern?: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  breakStart?: string;
+  breakEnd?: string;
+  breakDuration?: number;
+  shiftComments?: string;
+}
+
+interface Holiday {
+  date: string;
+  name: string;
+  type: 'federal' | 'company' | 'custom';
+}
+
+interface EmployeeStats {
+  totalHours: number;
+  totalShifts: number;
+  totalEarnings: number;
+  avgShiftLength: number;
+  daysWorked: number;
+  overtimeHours: number;
 }
 
 // --- Main Component ---
@@ -273,6 +298,15 @@ export default function Scheduler() {
   const [showSwapModal, setShowSwapModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [showEmployeeProfile, setShowEmployeeProfile] = useState(false);
+  const [selectedEmployeeProfile, setSelectedEmployeeProfile] = useState<string | null>(null);
+  const [showHolidayModal, setShowHolidayModal] = useState(false);
+  const [holidays, setHolidays] = useState<Array<{ date: string; name: string; type: 'federal' | 'company' }>>([]);
+  const [darkMode, setDarkMode] = useState(false);
+  const [showPrintView, setShowPrintView] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [employeeAvailability, setEmployeeAvailability] = useState<Record<string, any>>({});
   const [notifications, setNotifications] = useState<Array<{id: string; type: string; message: string; timestamp: number; read: boolean}>>([]);
   const [swapRequests, setSwapRequests] = useState<ShiftSwapRequest[]>([]);
   
@@ -355,7 +389,8 @@ export default function Scheduler() {
     notes: '',
     colorHue: null as number | null,
     isDraft: true,
-    isTimeOff: false
+    isTimeOff: false,
+    shiftComments: ''
   });
 
   const themeClasses = APP_THEMES[appTheme];
@@ -442,6 +477,80 @@ export default function Scheduler() {
       unsubscribeSettings();
     };
   }, [user, usePrivateStorage]);
+
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + K: Show keyboard shortcuts
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowKeyboardShortcuts(true);
+      }
+      // Ctrl/Cmd + N: New shift
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        setIsModalOpen(true);
+      }
+      // Ctrl/Cmd + P: Print view
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        setShowPrintView(true);
+      }
+      // Ctrl/Cmd + D: Toggle dark mode
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        setDarkMode(!darkMode);
+      }
+      // Ctrl/Cmd + ,: Settings
+      if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+        e.preventDefault();
+        setShowSettingsModal(true);
+      }
+      // Esc: Close all modals
+      if (e.key === 'Escape') {
+        setIsModalOpen(false);
+        setShowSettingsModal(false);
+        setShowTimeOffModal(false);
+        setShowTemplateModal(false);
+        setShowRecurringModal(false);
+        setShowSwapModal(false);
+        setShowNotifications(false);
+        setShowAdvancedAnalytics(false);
+        setShowAvailabilityModal(false);
+        setShowEmployeeProfile(false);
+        setShowHolidayModal(false);
+        setShowPrintView(false);
+        setShowKeyboardShortcuts(false);
+      }
+      // Arrow keys: Navigate months
+      if (e.altKey && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevMonth();
+      }
+      if (e.altKey && e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextMonth();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [darkMode]);
+
+  // Dark mode persistence
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem('noxshift-dark-mode');
+    if (savedDarkMode) setDarkMode(savedDarkMode === 'true');
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('noxshift-dark-mode', darkMode.toString());
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   // --- SETTINGS HANDLERS ---
   const saveSettings = async (updates: any) => {
@@ -913,6 +1022,110 @@ export default function Scheduler() {
     }
   };
 
+  // Calculate total hours worked in a week for overtime detection
+  const calculateWeeklyHours = (employeeName: string, weekStart: Date): number => {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    
+    return shifts
+      .filter(shift => {
+        const shiftDate = new Date(shift.date);
+        return shift.employeeName === employeeName && 
+               shiftDate >= weekStart && 
+               shiftDate < weekEnd &&
+               !shift.isTimeOff;
+      })
+      .reduce((total, shift) => {
+        const start = new Date(`2000-01-01T${shift.startTime}`);
+        const end = new Date(`2000-01-01T${shift.endTime}`);
+        const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        return total + hours;
+      }, 0);
+  };
+
+  // Calculate break times based on shift length (auto OSHA compliance)
+  const calculateBreaks = (startTime: string, endTime: string) => {
+    const start = new Date(`2000-01-01T${startTime}`);
+    const end = new Date(`2000-01-01T${endTime}`);
+    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+
+    if (hours >= 8) {
+      // 8+ hour shift: 30min meal break + 2x 15min rest breaks
+      const lunchStart = new Date(start.getTime() + 4 * 60 * 60 * 1000); // 4 hours in
+      return {
+        breakStart: lunchStart.toTimeString().substring(0, 5),
+        breakEnd: new Date(lunchStart.getTime() + 30 * 60 * 1000).toTimeString().substring(0, 5),
+        breakDuration: 30,
+        totalBreaks: 3
+      };
+    } else if (hours >= 6) {
+      // 6-8 hour shift: 30min meal break
+      const lunchStart = new Date(start.getTime() + 3 * 60 * 60 * 1000);
+      return {
+        breakStart: lunchStart.toTimeString().substring(0, 5),
+        breakEnd: new Date(lunchStart.getTime() + 30 * 60 * 1000).toTimeString().substring(0, 5),
+        breakDuration: 30,
+        totalBreaks: 1
+      };
+    } else if (hours >= 4) {
+      // 4-6 hour shift: 15min rest break
+      const breakStart = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+      return {
+        breakStart: breakStart.toTimeString().substring(0, 5),
+        breakEnd: new Date(breakStart.getTime() + 15 * 60 * 1000).toTimeString().substring(0, 5),
+        breakDuration: 15,
+        totalBreaks: 1
+      };
+    }
+    
+    return null;
+  };
+
+  // Get employee statistics
+  const getEmployeeStats = (employeeName: string): EmployeeStats => {
+    const employeeShifts = shifts.filter(s => s.employeeName === employeeName && !s.isTimeOff);
+    const employee = employees.find(e => e.name === employeeName);
+    const rate = employee?.rate || 0;
+
+    const totalHours = employeeShifts.reduce((sum, shift) => {
+      const start = new Date(`2000-01-01T${shift.startTime}`);
+      const end = new Date(`2000-01-01T${shift.endTime}`);
+      return sum + (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    }, 0);
+
+    const weeklyHoursMap = new Map<string, number>();
+    employeeShifts.forEach(shift => {
+      const shiftDate = new Date(shift.date);
+      const weekStart = new Date(shiftDate);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const weekKey = weekStart.toISOString();
+      
+      const start = new Date(`2000-01-01T${shift.startTime}`);
+      const end = new Date(`2000-01-01T${shift.endTime}`);
+      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      
+      weeklyHoursMap.set(weekKey, (weeklyHoursMap.get(weekKey) || 0) + hours);
+    });
+
+    const overtimeHours = Array.from(weeklyHoursMap.values())
+      .reduce((sum, weekHours) => sum + Math.max(0, weekHours - 40), 0);
+
+    return {
+      totalHours,
+      totalShifts: employeeShifts.length,
+      totalEarnings: totalHours * rate + (overtimeHours * rate * 0.5), // OT is 1.5x
+      avgShiftLength: employeeShifts.length > 0 ? totalHours / employeeShifts.length : 0,
+      daysWorked: new Set(employeeShifts.map(s => s.date)).size,
+      overtimeHours
+    };
+  };
+
+  // Check if date is a holiday
+  const isHoliday = (date: Date): Holiday | undefined => {
+    const dateStr = date.toISOString().split('T')[0];
+    return holidays.find(h => h.date.startsWith(dateStr));
+  };
+
   // Smart Auto-Schedule for the entire month
   const handleSmartAutoSchedule = async () => {
     if (!confirm('This will auto-schedule the entire month using AI optimization. This may overwrite existing shifts. Continue?')) {
@@ -1085,6 +1298,7 @@ export default function Scheduler() {
     for (let day = 1; day <= daysInMonth; day++) {
       const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const dateStr = dateObj.toISOString().split('T')[0];
+      const holiday = isHoliday(dateObj);
       
       const dayShifts = shifts.filter(s => {
           const matchesDate = s.date.startsWith(dateStr);
@@ -1096,9 +1310,24 @@ export default function Scheduler() {
       const isToday = new Date().toDateString() === dateObj.toDateString();
 
       days.push(
-        <div key={day} onClick={() => handleDayClick(day)} className={`min-h-[180px] border-r border-b border-white/20 p-3 transition-all duration-300 relative overflow-hidden group ${isToday ? 'bg-gradient-to-br from-purple-100/80 to-pink-100/80 backdrop-blur-sm ring-2 ring-purple-400/50 print:bg-white' : 'bg-white/50 backdrop-blur-sm'} hover:bg-white/80 hover:shadow-xl hover:scale-[1.01] hover:z-10 print:hover:bg-white cursor-pointer print:cursor-default print:min-h-[150px] animate-fade-in`}>
+        <div key={day} onClick={() => handleDayClick(day)} className={`min-h-[180px] border-r border-b border-white/20 p-3 transition-all duration-300 relative overflow-hidden group ${isToday ? 'bg-gradient-to-br from-purple-100/80 to-pink-100/80 backdrop-blur-sm ring-2 ring-purple-400/50 print:bg-white' : holiday ? 'bg-gradient-to-br from-yellow-100/60 to-orange-100/60 backdrop-blur-sm' : 'bg-white/50 backdrop-blur-sm'} hover:bg-white/80 hover:shadow-xl hover:scale-[1.01] hover:z-10 print:hover:bg-white cursor-pointer print:cursor-default print:min-h-[150px] animate-fade-in`}>
+          {/* Holiday Badge */}
+          {holiday && (
+            <div className="absolute top-1 right-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-[9px] font-bold px-2 py-1 rounded-lg shadow-lg print:hidden flex items-center gap-1" title={holiday.name}>
+              <Sparkles className="w-3 h-3" />
+              {holiday.type === 'federal' ? '🎊' : holiday.type === 'company' ? '🎉' : '⭐'}
+            </div>
+          )}
+          
           <div className="flex justify-between items-start mb-1.5">
-              <span className={`text-sm font-extrabold w-7 h-7 flex items-center justify-center rounded-xl shadow-sm transition-all duration-300 ${isToday ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white scale-110 print:bg-transparent print:text-black print:border print:border-black' : 'text-slate-700 group-hover:bg-slate-100'}`}>{day}</span>
+              <div>
+                <span className={`text-sm font-extrabold w-7 h-7 flex items-center justify-center rounded-xl shadow-sm transition-all duration-300 ${isToday ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white scale-110 print:bg-transparent print:text-black print:border print:border-black' : holiday ? 'bg-gradient-to-br from-yellow-400 to-orange-400 text-white' : 'text-slate-700 group-hover:bg-slate-100'}`}>{day}</span>
+                {holiday && (
+                  <div className="text-[9px] font-bold text-yellow-700 mt-1 truncate max-w-[60px]" title={holiday.name}>
+                    {holiday.name}
+                  </div>
+                )}
+              </div>
               <div className="flex gap-1.5 print:hidden">
                   {dayShifts.length > 0 && <button onClick={(e) => handleCopyDay(e, dayShifts)} className={`text-xs text-slate-400 ${themeClasses.text} opacity-0 group-hover:opacity-100 transition-all hover:scale-125 bg-white/50 p-1 rounded`} title="Copy Day"><Copy size={13} /></button>}
                   {dayClipboard && <button onClick={(e) => handlePasteDay(e, dateObj)} className="text-xs text-slate-400 hover:text-green-600 opacity-0 group-hover:opacity-100 transition-all hover:scale-125 bg-white/50 p-1 rounded" title="Paste Day"><Clipboard size={13} /></button>}
@@ -1109,6 +1338,16 @@ export default function Scheduler() {
               const theme = getThemeColors(shift.employeeName, shift.colorHue);
               const isDraft = shift.isDraft;
               const isTimeOff = shift.isTimeOff;
+              const holiday = isHoliday(date);
+              
+              // Check for overtime
+              const weekStart = new Date(date);
+              weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+              const weeklyHours = calculateWeeklyHours(shift.employeeName, weekStart);
+              const hasOvertime = weeklyHours > 40;
+              
+              // Calculate breaks
+              const breaks = calculateBreaks(shift.startTime, shift.endTime);
 
               if (isTimeOff) {
                   return (
@@ -1150,20 +1389,45 @@ export default function Scheduler() {
                     }
                   }}
                   onClick={(e) => handleShiftClick(e, shift)} 
-                  className={`text-xs px-3 py-2 rounded-lg border shadow-md shift-card animate-slide-in print:border-slate-300 print:shadow-none cursor-move hover:cursor-grab active:cursor-grabbing ${isDraft ? 'opacity-90 border-dashed border-2 animate-pulse' : ''}`} 
+                  className={`text-xs px-3 py-2 rounded-lg border shadow-md shift-card animate-slide-in print:border-slate-300 print:shadow-none cursor-move hover:cursor-grab active:cursor-grabbing relative ${isDraft ? 'opacity-90 border-dashed border-2 animate-pulse' : ''}`} 
                   style={{ animationDelay: `${index * 50}ms`, backgroundColor: theme.bg, borderColor: isDraft ? theme.bg : theme.border, color: theme.text }}
                 >
+                  {/* Overtime Badge */}
+                  {hasOvertime && (
+                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-lg print:hidden animate-pulse flex items-center gap-1" title={`${weeklyHours.toFixed(1)} hours this week`}>
+                      <AlertCircle className="w-2.5 h-2.5" />
+                      OT
+                    </div>
+                  )}
+                  
+                  {/* Break Indicator */}
+                  {breaks && (
+                    <div className="absolute -top-2 -left-2 bg-gradient-to-r from-green-500 to-teal-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-lg print:hidden flex items-center gap-1" title={`Break: ${breaks.breakStart}-${breaks.breakEnd}`}>
+                      <Coffee className="w-2.5 h-2.5" />
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2 mb-1">
                     {employeePhotos[shift.employeeName] ? (
                       <img 
                         src={employeePhotos[shift.employeeName]} 
                         alt={shift.employeeName}
                         className="w-6 h-6 rounded-full object-cover border border-white/50 shadow-sm shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedEmployeeProfile(shift.employeeName);
+                          setShowEmployeeProfile(true);
+                        }}
                       />
                     ) : (
                       <div 
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold border border-white/50 shadow-sm shrink-0"
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold border border-white/50 shadow-sm shrink-0 cursor-pointer hover:scale-110 transition-transform"
                         style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedEmployeeProfile(shift.employeeName);
+                          setShowEmployeeProfile(true);
+                        }}
                       >
                         {getEmployeeInitials(shift.employeeName)}
                       </div>
@@ -1172,6 +1436,11 @@ export default function Scheduler() {
                     <Grip className="w-3 h-3 ml-auto opacity-50 shrink-0 print:hidden" />
                   </div>
                   <div className="font-semibold text-xs leading-tight">{shift.employeeName}</div>
+                  {shift.shiftComments && (
+                    <div className="mt-1 text-[10px] opacity-75 italic truncate" title={shift.shiftComments}>
+                      💬 {shift.shiftComments}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -1542,6 +1811,21 @@ export default function Scheduler() {
                 </span>
               )}
             </button>
+            <button onClick={() => setShowAvailabilityModal(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Employee Availability">
+              <Users className="w-5 h-5 group-hover:text-teal-600" />
+            </button>
+            <button onClick={() => setShowHolidayModal(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Holiday Management">
+              <Sparkles className="w-5 h-5 group-hover:text-yellow-600" />
+            </button>
+            <button onClick={() => setDarkMode(!darkMode)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Toggle Dark Mode (Ctrl+D)">
+              {darkMode ? <Sun className="w-5 h-5 group-hover:text-yellow-500" /> : <Moon className="w-5 h-5 group-hover:text-indigo-600" />}
+            </button>
+            <button onClick={() => setShowPrintView(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Print View (Ctrl+P)">
+              <Printer className="w-5 h-5 group-hover:text-slate-600" />
+            </button>
+            <button onClick={() => setShowKeyboardShortcuts(true)} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Keyboard Shortcuts (Ctrl+K)">
+              <Keyboard className="w-5 h-5 group-hover:text-purple-600" />
+            </button>
             <button onClick={handleExportCSV} className="glass hover:bg-white/80 text-slate-700 p-3 rounded-xl transition-all hover-lift flex items-center gap-2 print:hidden group" title="Export CSV">
               <Download className="w-5 h-5 group-hover:text-blue-600" />
             </button>
@@ -1781,6 +2065,23 @@ export default function Scheduler() {
                   className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all outline-none resize-none"
                   placeholder="Add any additional notes..."
                 />
+              </div>
+
+              {/* Shift Comments (visible on calendar) */}
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-purple-600" />
+                  Shift Comments (Visible on Calendar)
+                </label>
+                <input
+                  type="text"
+                  value={formData.shiftComments || ''}
+                  onChange={(e) => setFormData({ ...formData, shiftComments: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all outline-none"
+                  placeholder="Brief comment shown on shift card..."
+                  maxLength={50}
+                />
+                <p className="text-xs text-slate-500 mt-1">This will appear directly on the shift card in the calendar</p>
               </div>
 
               {/* Toggles */}
@@ -3036,6 +3337,469 @@ export default function Scheduler() {
                 })}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Employee Availability Management Modal */}
+      {showAvailabilityModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAvailabilityModal(false)}>
+          <div className="glass rounded-3xl p-8 max-w-5xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <Users className="w-7 h-7" />
+                Employee Availability Management
+              </h2>
+              <button onClick={() => setShowAvailabilityModal(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {employees.map(employee => {
+                const availability = employeeAvailability[employee.name] || {};
+                const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                
+                return (
+                  <div key={employee.name} className="glass rounded-xl p-6">
+                    <h3 className="font-bold text-lg mb-4 text-slate-800">{employee.name}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {days.map(day => {
+                        const dayAvail = availability[day] || { available: true, start: '08:00', end: '20:00' };
+                        return (
+                          <div key={day} className="glass rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="font-semibold text-sm capitalize text-slate-700">{day}</span>
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                <input 
+                                  type="checkbox"
+                                  checked={dayAvail.available}
+                                  onChange={(e) => {
+                                    setEmployeeAvailability(prev => ({
+                                      ...prev,
+                                      [employee.name]: {
+                                        ...prev[employee.name],
+                                        [day]: { ...dayAvail, available: e.target.checked }
+                                      }
+                                    }));
+                                  }}
+                                  className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500"></div>
+                              </label>
+                            </div>
+                            {dayAvail.available && (
+                              <div className="space-y-2">
+                                <input
+                                  type="time"
+                                  value={dayAvail.start}
+                                  onChange={(e) => {
+                                    setEmployeeAvailability(prev => ({
+                                      ...prev,
+                                      [employee.name]: {
+                                        ...prev[employee.name],
+                                        [day]: { ...dayAvail, start: e.target.value }
+                                      }
+                                    }));
+                                  }}
+                                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-400"
+                                />
+                                <input
+                                  type="time"
+                                  value={dayAvail.end}
+                                  onChange={(e) => {
+                                    setEmployeeAvailability(prev => ({
+                                      ...prev,
+                                      [employee.name]: {
+                                        ...prev[employee.name],
+                                        [day]: { ...dayAvail, end: e.target.value }
+                                      }
+                                    }));
+                                  }}
+                                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-400"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={async () => {
+                await saveSettings({ employeeAvailability });
+                setStatus({ type: 'success', msg: 'Availability saved!' });
+                setShowAvailabilityModal(false);
+              }}
+              className="w-full mt-6 px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold rounded-xl transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+            >
+              <CheckCircle2 className="w-5 h-5" />
+              Save Availability
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Holiday Management Modal */}
+      {showHolidayModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowHolidayModal(false)}>
+          <div className="glass rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <Sparkles className="w-7 h-7 text-yellow-500" />
+                Holiday Management
+              </h2>
+              <button onClick={() => setShowHolidayModal(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Add Holiday Form */}
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4">Add Holiday</h3>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const holiday: Holiday = {
+                    date: formData.get('date') as string,
+                    name: formData.get('name') as string,
+                    type: formData.get('type') as 'federal' | 'company' | 'custom'
+                  };
+                  
+                  const updated = [...holidays, holiday];
+                  setHolidays(updated);
+                  await saveSettings({ holidays: updated });
+                  setStatus({ type: 'success', msg: 'Holiday added!' });
+                  e.currentTarget.reset();
+                }} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Holiday Name</label>
+                    <input
+                      name="name"
+                      type="text"
+                      required
+                      placeholder="e.g., Christmas Day"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-yellow-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Date</label>
+                    <input
+                      name="date"
+                      type="date"
+                      required
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-yellow-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Type</label>
+                    <select
+                      name="type"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-yellow-400"
+                    >
+                      <option value="federal">Federal Holiday</option>
+                      <option value="company">Company Holiday</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </div>
+                  <button type="submit" className="w-full px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold rounded-xl transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2">
+                    <PlusCircle className="w-5 h-5" />
+                    Add Holiday
+                  </button>
+                </form>
+              </div>
+
+              {/* Holidays List */}
+              <div className="glass rounded-xl p-6">
+                <h3 className="font-bold text-lg mb-4">Upcoming Holidays</h3>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {holidays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((holiday, idx) => (
+                    <div key={idx} className="glass rounded-lg p-4 flex justify-between items-center hover-lift">
+                      <div>
+                        <p className="font-bold text-slate-800">{holiday.name}</p>
+                        <p className="text-sm text-slate-600">{new Date(holiday.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                        <span className={`text-xs px-2 py-1 rounded-lg mt-1 inline-block ${
+                          holiday.type === 'federal' ? 'bg-blue-100 text-blue-700' :
+                          holiday.type === 'company' ? 'bg-green-100 text-green-700' :
+                          'bg-purple-100 text-purple-700'
+                        }`}>
+                          {holiday.type}
+                        </span>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (confirm('Remove this holiday?')) {
+                            const updated = holidays.filter((_, i) => i !== idx);
+                            setHolidays(updated);
+                            await saveSettings({ holidays: updated });
+                            setStatus({ type: 'success', msg: 'Holiday removed' });
+                          }
+                        }}
+                        className="p-2 hover:bg-red-100 rounded-lg transition-all"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </button>
+                    </div>
+                  ))}
+                  {holidays.length === 0 && (
+                    <div className="text-center py-8 text-slate-500">
+                      <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p className="text-sm">No holidays scheduled</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Print View Modal */}
+      {showPrintView && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+          <div className="max-w-7xl mx-auto p-8">
+            <div className="flex justify-between items-center mb-6 print:hidden">
+              <h2 className="text-2xl font-bold text-slate-800">Print Schedule</h2>
+              <div className="flex gap-3">
+                <button onClick={() => window.print()} className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:scale-105 transition-all flex items-center gap-2 shadow-lg">
+                  <Printer className="w-5 h-5" />
+                  Print
+                </button>
+                <button onClick={() => setShowPrintView(false)} className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all">
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {/* Print-optimized schedule */}
+            <div className="bg-white border border-slate-300 rounded-lg p-8">
+              <div className="text-center mb-6">
+                <h1 className="text-3xl font-bold text-slate-800 mb-2">NoxShift Schedule</h1>
+                <p className="text-lg text-slate-600">{currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+              </div>
+
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 border-b-2 border-slate-300">
+                    <th className="px-4 py-3 text-left font-bold text-slate-700">Date</th>
+                    <th className="px-4 py-3 text-left font-bold text-slate-700">Employee</th>
+                    <th className="px-4 py-3 text-left font-bold text-slate-700">Role</th>
+                    <th className="px-4 py-3 text-left font-bold text-slate-700">Time</th>
+                    <th className="px-4 py-3 text-left font-bold text-slate-700">Department</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shifts
+                    .filter(shift => !shift.isDraft && !shift.isTimeOff)
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .map((shift, idx) => {
+                      const holiday = isHoliday(new Date(shift.date));
+                      return (
+                        <tr key={idx} className={`border-b border-slate-200 ${holiday ? 'bg-yellow-50' : ''}`}>
+                          <td className="px-4 py-3 text-sm text-slate-700">
+                            {new Date(shift.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                            {holiday && <span className="ml-2 text-xs text-yellow-700">({holiday.name})</span>}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-semibold text-slate-800">{shift.employeeName}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700">{shift.role}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700">{formatTime(shift.startTime)} - {formatTime(shift.endTime)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-600">{shift.department || 'General'}</td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+
+              <div className="mt-8 grid grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-bold text-lg mb-3 text-slate-800">Employee Summary</h3>
+                  {employees.map(emp => {
+                    const stats = getEmployeeStats(emp.name);
+                    return (
+                      <div key={emp.name} className="flex justify-between py-2 border-b border-slate-200">
+                        <span className="font-semibold text-sm">{emp.name}</span>
+                        <span className="text-sm text-slate-600">{stats.totalHours.toFixed(1)}h | {stats.totalShifts} shifts</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg mb-3 text-slate-800">Cost Summary</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between py-2 border-b border-slate-200">
+                      <span className="text-sm">Total Labor Hours:</span>
+                      <span className="font-semibold text-sm">{shifts.filter(s => !s.isTimeOff).reduce((sum, s) => {
+                        const start = new Date(`2000-01-01T${s.startTime}`);
+                        const end = new Date(`2000-01-01T${s.endTime}`);
+                        return sum + (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+                      }, 0).toFixed(1)}h</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-slate-200">
+                      <span className="text-sm">Total Labor Cost:</span>
+                      <span className="font-semibold text-sm">${employees.reduce((sum, emp) => sum + getEmployeeStats(emp.name).totalEarnings, 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Keyboard Shortcuts Modal */}
+      {showKeyboardShortcuts && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowKeyboardShortcuts(false)}>
+          <div className="glass rounded-3xl p-8 max-w-3xl w-full animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-extrabold gradient-text flex items-center gap-3">
+                <Keyboard className="w-7 h-7" />
+                Keyboard Shortcuts
+              </h2>
+              <button onClick={() => setShowKeyboardShortcuts(false)} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <h3 className="font-bold text-lg text-slate-800 mb-4">Navigation</h3>
+                {[
+                  { keys: 'Alt + ←', action: 'Previous Month' },
+                  { keys: 'Alt + →', action: 'Next Month' },
+                  { keys: 'Esc', action: 'Close Modal' }
+                ].map(shortcut => (
+                  <div key={shortcut.keys} className="flex justify-between items-center glass rounded-lg p-3">
+                    <span className="text-sm text-slate-700">{shortcut.action}</span>
+                    <kbd className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-mono font-bold rounded-lg shadow">{shortcut.keys}</kbd>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="font-bold text-lg text-slate-800 mb-4">Actions</h3>
+                {[
+                  { keys: 'Ctrl + N', action: 'New Shift' },
+                  { keys: 'Ctrl + P', action: 'Print View' },
+                  { keys: 'Ctrl + D', action: 'Toggle Dark Mode' },
+                  { keys: 'Ctrl + ,', action: 'Settings' },
+                  { keys: 'Ctrl + K', action: 'Shortcuts' }
+                ].map(shortcut => (
+                  <div key={shortcut.keys} className="flex justify-between items-center glass rounded-lg p-3">
+                    <span className="text-sm text-slate-700">{shortcut.action}</span>
+                    <kbd className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-mono font-bold rounded-lg shadow">{shortcut.keys}</kbd>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 glass rounded-xl p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200">
+              <p className="text-sm text-slate-700 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-purple-600" />
+                <span>Pro tip: Use keyboard shortcuts to navigate NoxShift 10x faster!</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Employee Profile Modal */}
+      {showEmployeeProfile && selectedEmployeeProfile && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => { setShowEmployeeProfile(false); setSelectedEmployeeProfile(null); }}>
+          <div className="glass rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            {(() => {
+              const employee = employees.find(e => e.name === selectedEmployeeProfile);
+              if (!employee) return null;
+              
+              const stats = getEmployeeStats(employee.name);
+              const weekStart = new Date(currentDate);
+              weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+              const weeklyHours = calculateWeeklyHours(employee.name, weekStart);
+              const isOvertime = weeklyHours > 40;
+
+              return (
+                <>
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                        {employee.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-extrabold gradient-text">{employee.name}</h2>
+                        <p className="text-slate-600">{employee.role || 'Staff'} • ${employee.rate}/hr</p>
+                        {isOvertime && (
+                          <div className="mt-2 px-3 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-lg flex items-center gap-1 w-fit animate-pulse">
+                            <AlertCircle className="w-3 h-3" />
+                            Overtime This Week: {weeklyHours.toFixed(1)}h
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <button onClick={() => { setShowEmployeeProfile(false); setSelectedEmployeeProfile(null); }} className="p-2 hover:bg-red-50 rounded-xl transition-all">
+                      <X className="w-6 h-6 text-slate-600" />
+                    </button>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="glass rounded-xl p-4 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text">{stats.totalShifts}</div>
+                      <div className="text-xs text-slate-600 mt-1">Total Shifts</div>
+                    </div>
+                    <div className="glass rounded-xl p-4 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text">{stats.totalHours.toFixed(0)}h</div>
+                      <div className="text-xs text-slate-600 mt-1">Total Hours</div>
+                    </div>
+                    <div className="glass rounded-xl p-4 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text">${stats.totalEarnings.toFixed(0)}</div>
+                      <div className="text-xs text-slate-600 mt-1">Earnings</div>
+                    </div>
+                    <div className="glass rounded-xl p-4 text-center hover-lift">
+                      <div className="text-3xl font-bold gradient-text">{stats.avgShiftLength.toFixed(1)}h</div>
+                      <div className="text-xs text-slate-600 mt-1">Avg Shift</div>
+                    </div>
+                  </div>
+
+                  {/* Upcoming Shifts */}
+                  <div className="glass rounded-xl p-6">
+                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                      <CalendarIcon className="w-5 h-5 text-purple-600" />
+                      Upcoming Shifts
+                    </h3>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {shifts
+                        .filter(s => s.employeeName === employee.name && !s.isDraft && !s.isTimeOff && new Date(s.date) >= new Date())
+                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                        .slice(0, 10)
+                        .map((shift, idx) => {
+                          const breaks = calculateBreaks(shift.startTime, shift.endTime);
+                          return (
+                            <div key={idx} className="glass rounded-lg p-3 flex justify-between items-center hover-lift">
+                              <div>
+                                <p className="font-semibold text-sm text-slate-800">
+                                  {new Date(shift.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                </p>
+                                <p className="text-xs text-slate-600">{formatTime(shift.startTime)} - {formatTime(shift.endTime)} • {shift.role}</p>
+                                {breaks && (
+                                  <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                                    <Coffee className="w-3 h-3" />
+                                    Break: {breaks.breakStart} - {breaks.breakEnd} ({breaks.breakDuration}min)
+                                  </p>
+                                )}
+                              </div>
+                              <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-lg">{shift.department || 'General'}</span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
