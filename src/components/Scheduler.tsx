@@ -2115,7 +2115,7 @@ export default function Scheduler() {
               });
             }
           }}
-          className={`${dayShifts.length === 0 ? 'min-h-[80px]' : dayShifts.length === 1 ? 'min-h-[120px]' : dayShifts.length === 2 ? 'min-h-[160px]' : 'min-h-[200px]'} border-r border-b p-3 transition-all duration-300 relative overflow-hidden group ${
+          className={`border-r border-b p-3 transition-all duration-300 relative overflow-hidden group ${
             isToday 
               ? 'ring-2 ring-purple-400/50 print:bg-white' 
               : holiday 
