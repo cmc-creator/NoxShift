@@ -36,7 +36,7 @@ export default function Login() {
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
       }
-      navigate('/');
+      navigate('/scheduler');
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     } finally {
@@ -51,7 +51,7 @@ export default function Login() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      navigate('/');
+      navigate('/scheduler');
     } catch (err: any) {
       setError(err.message || 'Google sign-in failed');
     } finally {
@@ -65,7 +65,7 @@ export default function Login() {
     
     try {
       await signInAnonymously(auth);
-      navigate('/');
+      navigate('/scheduler');
     } catch (err: any) {
       setError(err.message || 'Anonymous sign-in failed');
     } finally {
