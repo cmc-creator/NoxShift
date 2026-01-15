@@ -1,20 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { initializeApp } from 'firebase/app';
 import { 
-  getAuth, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signInAnonymously,
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
-import { firebaseConfig } from '../firebase.config';
+import { auth } from '../lib/firebase';
 import { Lock, Mail, User, Zap, Shield, Sparkles, Chrome } from 'lucide-react';
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
 export default function Login() {
   const navigate = useNavigate();

@@ -1,16 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { initializeApp } from 'firebase/app';
 import { 
-  getAuth, 
   onAuthStateChanged, 
   User,
   signOut as firebaseSignOut
 } from 'firebase/auth';
-import { firebaseConfig } from '../firebase.config';
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+import { auth } from '../lib/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -51,5 +45,3 @@ export function useAuth() {
   }
   return context;
 }
-
-export { auth };

@@ -112,9 +112,8 @@ import ThemeSelector from './ThemeSelector';
 import { useAuth } from '../context/AuthContext';
 import GuildDashboard from '../features/guild/GuildDashboard';
 import { useTheme } from '../context/ThemeContext';
-import { initializeApp } from 'firebase/app';
+import { auth } from '../lib/firebase';
 import { 
-  getAuth, 
   signInAnonymously, 
   signInWithCustomToken,
   onAuthStateChanged 
@@ -132,11 +131,10 @@ import {
   getDocs,
   writeBatch
 } from 'firebase/firestore';
-import { firebaseConfig, appId as configAppId, initialAuthToken } from '../firebase.config';
+import { app } from '../lib/firebase';
+import { appId as configAppId, initialAuthToken } from '../firebase.config';
 
 // --- Firebase Configuration ---
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = configAppId;
 
