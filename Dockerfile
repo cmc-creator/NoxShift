@@ -1,18 +1,18 @@
-# 1. Use an official Node.js runtime as a parent image
 FROM node:18-alpine
 
-# 2. Set the working directory inside the container
 WORKDIR /app
 
-# 3. Copy package files and install dependencies
+# Install dependencies
 COPY package*.json ./
 RUN npm install
 
-# 4. Copy the rest of your app's source code
+# Copy all code
 COPY . .
 
-# 5. Open port 8080 (Spaceship needs this!)
-EXPOSE 8080
+# --- THIS WAS MISSING ---
+# Build the Next.js app
+RUN npm run build
+# ------------------------
 
-# 6. Start the app
+EXPOSE 8080
 CMD ["npm", "start"]
