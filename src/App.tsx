@@ -1,40 +1,41 @@
+import { ThemeProvider } from './context/ThemeContext'
+import { AuthProvider } from './context/AuthContext'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import Scheduler from './components/Scheduler'
+import Basecamp from './pages/Basecamp'
+import Login from './pages/Login'
+import Landing from './pages/Landing'
+import ProtectedRoute from './components/ProtectedRoute'
+
 function App() {
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: 'white',
-      fontFamily: 'system-ui, sans-serif',
-      textAlign: 'center',
-      padding: '20px'
-    }}>
-      <div>
-        <h1 style={{ fontSize: '4rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-          NOXSHIFT™
-        </h1>
-        <p style={{ fontSize: '1.5rem', marginBottom: '2rem' }}>
-          The Ultimate Employee Scheduler
-        </p>
-        <a 
-          href="/login"
-          style={{
-            display: 'inline-block',
-            padding: '1rem 2rem',
-            background: 'linear-gradient(to right, #7c3aed, #2563eb)',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '0.75rem',
-            fontWeight: '600',
-            fontSize: '1.125rem'
-          }}
-        >
-          Get Started
-        </a>
-      </div>
-    </div>
+    <AuthProvider>
+      <ThemeProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route 
+              path="/scheduler" 
+              element={
+                <ProtectedRoute>
+                  <Scheduler />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/basecamp" 
+              element={
+                <ProtectedRoute>
+                  <Basecamp />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </BrowserRouter>
+      </ThemeProvider>
+    </AuthProvider>
   )
 }
 

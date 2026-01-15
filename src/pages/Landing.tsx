@@ -33,16 +33,10 @@ export default function Landing() {
             <span className="text-2xl font-bold text-white">NOXSHIFT™</span>
           </div>
           <div className="flex gap-4">
-            <button
-              onClick={() => setShowVipModal(true)}
-              className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-amber-500/50 transition-all"
-            >
+            <button onClick={() => setShowVipModal(true)} className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-amber-500/50 transition-all">
               VIP Access
             </button>
-            <button
-              onClick={() => navigate('/login')}
-              className="px-6 py-2.5 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg hover:bg-white/20 transition-all border border-white/20"
-            >
+            <button onClick={() => navigate('/login')} className="px-6 py-2.5 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg hover:bg-white/20 transition-all border border-white/20">
               Sign In
             </button>
           </div>
@@ -51,19 +45,10 @@ export default function Landing() {
         {/* Hero Section */}
         <section className="container mx-auto px-6 py-20 text-center">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-7xl font-black text-white mb-6 tracking-tight">
-              NOXSHIFT™
-            </h1>
-            <p className="text-3xl text-gray-300 mb-4 font-light">
-              The Ultimate Employee Scheduler
-            </p>
-            <p className="text-lg text-gray-400 mb-12">
-              Part of the Nox Product Line - Powerful. Intuitive. Unstoppable.
-            </p>
-            <button
-              onClick={() => navigate('/login')}
-              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-lg font-semibold rounded-xl hover:shadow-2xl hover:shadow-purple-500/50 transition-all inline-flex items-center gap-2"
-            >
+            <h1 className="text-7xl font-black text-white mb-6 tracking-tight">NOXSHIFT™</h1>
+            <p className="text-3xl text-gray-300 mb-4 font-light">The Ultimate Employee Scheduler</p>
+            <p className="text-lg text-gray-400 mb-12">Part of the Nox Product Line - Powerful. Intuitive. Unstoppable.</p>
+            <button onClick={() => navigate('/login')} className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-lg font-semibold rounded-xl hover:shadow-2xl hover:shadow-purple-500/50 transition-all inline-flex items-center gap-2">
               Get Started
               <ArrowRight className="w-5 h-5" />
             </button>
@@ -83,26 +68,10 @@ export default function Landing() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            <FeatureCard
-              icon={<Calendar className="w-8 h-8" />}
-              title="Smart Scheduling"
-              description="AI-powered shift optimization"
-            />
-            <FeatureCard
-              icon={<Users className="w-8 h-8" />}
-              title="Employee Management"
-              description="Centralized team oversight"
-            />
-            <FeatureCard
-              icon={<Clock className="w-8 h-8" />}
-              title="Time Tracking"
-              description="Accurate attendance monitoring"
-            />
-            <FeatureCard
-              icon={<BarChart3 className="w-8 h-8" />}
-              title="Analytics"
-              description="Real-time insights & reports"
-            />
+            <FeatureCard icon={<Calendar className="w-8 h-8" />} title="Smart Scheduling" description="AI-powered shift optimization" />
+            <FeatureCard icon={<Users className="w-8 h-8" />} title="Employee Management" description="Centralized team oversight" />
+            <FeatureCard icon={<Clock className="w-8 h-8" />} title="Time Tracking" description="Accurate attendance monitoring" />
+            <FeatureCard icon={<BarChart3 className="w-8 h-8" />} title="Analytics" description="Real-time insights & reports" />
           </div>
         </section>
 
@@ -131,23 +100,13 @@ export default function Landing() {
         {/* CTA Section */}
         <section className="container mx-auto px-6 py-20 text-center">
           <div className="max-w-3xl mx-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-12">
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Ready to Transform Your Scheduling?
-            </h2>
-            <p className="text-xl text-gray-300 mb-8">
-              Join thousands of businesses using NoxShift to streamline their workforce management.
-            </p>
+            <h2 className="text-4xl font-bold text-white mb-4">Ready to Transform Your Scheduling?</h2>
+            <p className="text-xl text-gray-300 mb-8">Join thousands of businesses using NoxShift to streamline their workforce management.</p>
             <div className="flex gap-4 justify-center">
-              <button
-                onClick={() => navigate('/login')}
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-lg font-semibold rounded-xl hover:shadow-2xl hover:shadow-purple-500/50 transition-all"
-              >
+              <button onClick={() => navigate('/login')} className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-lg font-semibold rounded-xl hover:shadow-2xl hover:shadow-purple-500/50 transition-all">
                 Start Free Trial
               </button>
-              <button
-                onClick={() => setShowVipModal(true)}
-                className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-lg font-semibold rounded-xl hover:shadow-2xl hover:shadow-amber-500/50 transition-all"
-              >
+              <button onClick={() => setShowVipModal(true)} className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-lg font-semibold rounded-xl hover:shadow-2xl hover:shadow-amber-500/50 transition-all">
                 VIP Access
               </button>
             </div>
@@ -157,7 +116,7 @@ export default function Landing() {
         {/* Footer */}
         <footer className="container mx-auto px-6 py-8 border-t border-white/10">
           <div className="text-center text-gray-500">
-            <p>&copy; 2026 NoxShift™. Part of the Nox Product Line. All rights reserved.</p>
+            <p>&copy; 2026 NOXSHIFT™. Part of the Nox Product Line. All rights reserved.</p>
           </div>
         </footer>
       </div>
@@ -167,38 +126,14 @@ export default function Landing() {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-gradient-to-br from-slate-900 to-purple-900 border border-white/20 rounded-2xl p-8 max-w-md w-full shadow-2xl">
             <h3 className="text-2xl font-bold text-white mb-4">VIP Access</h3>
-            <p className="text-gray-300 mb-6">
-              Enter your exclusive VIP code to unlock premium features and early access.
-            </p>
-            <input
-              type="text"
-              value={vipCode}
-              onChange={(e) => {
-                setVipCode(e.target.value);
-                setVipError('');
-              }}
-              placeholder="Enter VIP Code"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 mb-4"
-              onKeyPress={(e) => e.key === 'Enter' && handleVipAccess()}
-            />
-            {vipError && (
-              <p className="text-red-400 text-sm mb-4">{vipError}</p>
-            )}
+            <p className="text-gray-300 mb-6">Enter your exclusive VIP code to unlock premium features and early access.</p>
+            <input type="text" value={vipCode} onChange={(e) => { setVipCode(e.target.value); setVipError(''); }} placeholder="Enter VIP Code" className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 mb-4" onKeyPress={(e) => e.key === 'Enter' && handleVipAccess()} />
+            {vipError && <p className="text-red-400 text-sm mb-4">{vipError}</p>}
             <div className="flex gap-3">
-              <button
-                onClick={handleVipAccess}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-amber-500/50 transition-all"
-              >
+              <button onClick={handleVipAccess} className="flex-1 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-amber-500/50 transition-all">
                 Unlock Access
               </button>
-              <button
-                onClick={() => {
-                  setShowVipModal(false);
-                  setVipCode('');
-                  setVipError('');
-                }}
-                className="px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-all"
-              >
+              <button onClick={() => { setShowVipModal(false); setVipCode(''); setVipError(''); }} className="px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-all">
                 Cancel
               </button>
             </div>
