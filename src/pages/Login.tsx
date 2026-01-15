@@ -203,8 +203,7 @@ export default function Login() {
 
             <button
               onClick={handleAnonymousSignIn}
-              disabled={loading}
-              className="w-full py-3 bg-white/5 border border-white/10 text-gray-300 font-medium rounded-lg hover:bg-white/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3 bg-white/5 border border-white/10 text-gray-300 font-medium rounded-lg hover:bg-white/10 transition-all flex items-center justify-center gap-2"
             >
               <User className="w-5 h-5" />
               Continue as Guest
