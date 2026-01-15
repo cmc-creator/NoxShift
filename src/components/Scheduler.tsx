@@ -780,12 +780,12 @@ export default function Scheduler() {
       // Ctrl/Cmd + ,: Settings
       if ((e.ctrlKey || e.metaKey) && e.key === ',') {
         e.preventDefault();
-        setShowSettingsModal(true);
+        setShowSettings(true);
       }
       // Esc: Close all modals
       if (e.key === 'Escape') {
         setIsModalOpen(false);
-        setShowSettingsModal(false);
+        setShowSettings(false);
         setShowTimeOffModal(false);
         setShowTemplateModal(false);
         setShowRecurringModal(false);
@@ -801,11 +801,11 @@ export default function Scheduler() {
       // Arrow keys: Navigate months
       if (e.altKey && e.key === 'ArrowLeft') {
         e.preventDefault();
-        prevMonth();
+        handlePrevMonth();
       }
       if (e.altKey && e.key === 'ArrowRight') {
         e.preventDefault();
-        nextMonth();
+        handleNextMonth();
       }
     };
 
@@ -1224,7 +1224,7 @@ export default function Scheduler() {
       if (nameMatch) {
         action = `Scheduling ${nameMatch.name}...`;
         success = true;
-        setTimeout(() => setShowShiftModal(true), 500);
+        setTimeout(() => setIsModalOpen(true), 500);
       }
     } else if (transcript.includes('show') || transcript.includes('go to')) {
       if (transcript.includes('today')) {
@@ -1248,16 +1248,16 @@ export default function Scheduler() {
       }
     } else if (transcript.includes('open')) {
       if (transcript.includes('gamification') || transcript.includes('leaderboard')) {
-        setShowGamification(true);
-        action = 'Opened gamification';
+        setShowNotifications(true);
+        action = 'Opened notifications';
         success = true;
       } else if (transcript.includes('ai') || transcript.includes('recommendations')) {
-        setShowAIInsights(true);
-        action = 'Opened AI insights';
+        setShowOracle(true);
+        action = 'Opened Oracle AI';
         success = true;
       } else if (transcript.includes('chat')) {
-        setShowTeamChat(true);
-        action = 'Opened team chat';
+        setShowNotifications(true);
+        action = 'Opened notifications';
         success = true;
       }
     }
@@ -1572,7 +1572,9 @@ export default function Scheduler() {
       notes: '',
       colorHue: null,
       isDraft: true,
-      isTimeOff: false
+      isTimeOff: false,
+      shiftComments: '',
+      differential: 0
     });
     setIsModalOpen(true);
     console.log('Modal should open now');
