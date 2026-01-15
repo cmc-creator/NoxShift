@@ -2,17 +2,18 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies
+# 1. Install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy all code
+# 2. Copy code
 COPY . .
 
-# --- THIS WAS MISSING ---
-# Build the Next.js app
-RUN npm run build
-# ------------------------
+# 3. SKIP the heavy build (Saves memory!)
+# RUN npm run build
 
+# 4. Open Port 8080
 EXPOSE 8080
-CMD ["npm", "start"]
+
+# 5. Start in "Dev Mode" (Lighter for this server)
+CMD ["npx", "next", "dev", "-p", "8080"]
