@@ -2,12 +2,12 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCTS2ux52QuPpb9aAzMzGYL46mJAjHbnZc",
+  apiKey: "AIzaSyCTS2ux52QuPpb9aAzMZGYL46mJAjHbn2c",
   authDomain: "noxshift-2617b.firebaseapp.com",
   projectId: "noxshift-2617b",
   storageBucket: "noxshift-2617b.firebasestorage.app",
   messagingSenderId: "265911446290",
-  appId: "1:265911446290:web:733288Sb1B4cd1bc4021cb"
+  appId: "1:265911446290:web:7332885b184cd1bc4021cb"
 };
 
 // Initialize Firebase only if it hasn't been initialized yet
