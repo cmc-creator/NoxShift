@@ -1,10 +1,15 @@
 FROM node:18-alpine
+WORKDIR /app
 
-# Create a tiny fake app file
-RUN echo "const http = require('http'); http.createServer((_, r) => r.end('Unlocked!')).listen(8080);" > fake-server.js
+# 1. Install dependencies
+COPY package*.json ./
+RUN npm install
 
-# Open the port
+# 2. Copy code
+COPY . .
+
+# 3. Open Port 8080
 EXPOSE 8080
 
-# Run the fake app
-CMD ["node", "fake-server.js"]
+# 4. Start in "Dev Mode" (Safe for small servers)
+CMD ["npx", "next", "dev", "-p", "8080"]
