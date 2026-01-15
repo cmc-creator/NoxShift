@@ -2,18 +2,12 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# 1. Install dependencies (This works now!)
-COPY package*.json ./
-RUN npm install
-
-# 2. Copy the rest of the code
+# 1. Copy the code (Fast!)
 COPY . .
 
-# 3. SKIP the heavy build (This prevents the snapshot crash)
-# RUN npm run build
-
-# 4. Open Port
+# 2. Open the port
 EXPOSE 8080
 
-# 5. Start in Dev Mode (Fast & Reliable)
-CMD ["npx", "next", "dev", "-p", "8080"]
+# 3. TRICK: Install dependencies when the app STARTS, not when it builds.
+#    This skips the "Snapshot" crash entirely.
+CMD ["/bin/sh", "-c", "npm install && npx next dev -p 8080"]
