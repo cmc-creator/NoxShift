@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const isGuest = localStorage.getItem('guest-mode') === 'true';
 
   if (loading) {
     return (
@@ -18,7 +19,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  if (!user) {
+  if (!user && !isGuest) {
     return <Navigate to="/login" replace />;
   }
 

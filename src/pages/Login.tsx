@@ -54,17 +54,9 @@ export default function Login() {
   };
 
   const handleAnonymousSignIn = async () => {
-    setError('');
-    setLoading(true);
-    
-    try {
-      await signInAnonymously(auth);
-      navigate('/scheduler');
-    } catch (err: any) {
-      setError(err.message || 'Anonymous sign-in failed');
-    } finally {
-      setLoading(false);
-    }
+    // Bypass Firebase for guest access
+    localStorage.setItem('guest-mode', 'true');
+    navigate('/scheduler');
   };
 
   return (
