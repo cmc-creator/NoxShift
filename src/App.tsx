@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Scheduler from './components/Scheduler'
 import Basecamp from './pages/Basecamp'
 import Login from './pages/Login'
-import Landing from './pages/Landing'
+import SimpleLanding from './pages/SimpleLanding'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -13,7 +13,7 @@ function App() {
       <ThemeProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<SimpleLanding />} />
             <Route path="/login" element={<Login />} />
             <Route 
               path="/scheduler" 
