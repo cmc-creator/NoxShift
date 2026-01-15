@@ -100,7 +100,8 @@ import {
   Package,
   CreditCard,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  LogOut
 } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -108,6 +109,7 @@ import { CSS } from '@dnd-kit/utilities';
 import html2canvas from 'html2canvas';
 import QRCode from 'qrcode';
 import ThemeSelector from './ThemeSelector';
+import { useAuth } from '../context/AuthContext';
 import GuildDashboard from '../features/guild/GuildDashboard';
 import { useTheme } from '../context/ThemeContext';
 import { initializeApp } from 'firebase/app';
@@ -361,6 +363,7 @@ interface EmployeeStats {
 // --- Main Component ---
 
 export default function Scheduler() {
+  const { signOut } = useAuth();
   const [user, setUser] = useState<any>(null);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date(2026, 0, 1));
@@ -2686,6 +2689,10 @@ export default function Scheduler() {
             
             <button onClick={() => setShowSettings(true)} className="nox-tracer p-3 print:hidden" title="Settings" style={{'--tracer-color': '#ec4899'} as React.CSSProperties}>
               <Settings className="w-5 h-5 text-white" />
+            </button>
+            
+            <button onClick={() => signOut()} className="nox-tracer p-3 print:hidden" title="Sign Out" style={{'--tracer-color': '#ef4444'} as React.CSSProperties}>
+              <LogOut className="w-5 h-5 text-white" />
             </button>
             
             {/* MENU DROPDOWN */}
