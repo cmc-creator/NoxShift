@@ -387,7 +387,7 @@ body {
   
   /* Day cells */
   .grid > div {
-    min-height: 120px !important;
+    min-height: 60px !important;
     page-break-inside: avoid !important;
     border: 1px solid #333 !important;
     background: white !important;
