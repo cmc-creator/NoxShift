@@ -2324,7 +2324,7 @@ export default function Scheduler() {
     }
     const totalCells = days.length;
     const remainingCells = 42 - totalCells;
-    for (let i = 0; i < remainingCells; i++) days.push(<div key={`empty-end-${i}`} className={`min-h-[60px] backdrop-blur-sm border-r border-b print:bg-white print:min-h-[150px]`} style={{ backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.5)' : 'rgba(255, 255, 255, 0.3)', borderColor: darkMode ? 'rgba(45, 45, 68, 0.5)' : 'rgba(255, 255, 255, 0.2)' }}></div>);
+    for (let i = 0; i < remainingCells; i++) days.push(<div key={`empty-end-${i}`} className={`min-h-[60px] backdrop-blur-sm border-r border-b print:bg-white print:min-h-[100px]`} style={{ backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.5)' : 'rgba(255, 255, 255, 0.3)', borderColor: darkMode ? 'rgba(45, 45, 68, 0.5)' : 'rgba(255, 255, 255, 0.2)' }}></div>);
     return days;
   };
 
