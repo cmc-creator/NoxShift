@@ -2074,7 +2074,7 @@ export default function Scheduler() {
     const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
     const days = [];
 
-    for (let i = 0; i < firstDay; i++) days.push(<div key={`empty-${i}`} className={`min-h-[120px] backdrop-blur-sm border-r border-b print:bg-white print:min-h-[100px]`} style={{ backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.5)' : 'rgba(255, 255, 255, 0.3)', borderColor: darkMode ? 'rgba(45, 45, 68, 0.5)' : 'rgba(255, 255, 255, 0.2)' }}></div>);
+    for (let i = 0; i < firstDay; i++) days.push(<div key={`empty-${i}`} className={`min-h-[60px] backdrop-blur-sm border-r border-b print:bg-white print:min-h-[100px]`} style={{ backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.5)' : 'rgba(255, 255, 255, 0.3)', borderColor: darkMode ? 'rgba(45, 45, 68, 0.5)' : 'rgba(255, 255, 255, 0.2)' }}></div>);
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
@@ -2115,7 +2115,7 @@ export default function Scheduler() {
               });
             }
           }}
-          className={`border-r border-b p-3 transition-all duration-300 relative overflow-hidden group ${
+          className={`min-h-[60px] border-r border-b p-3 transition-all duration-300 relative overflow-hidden group ${
             isToday 
               ? 'ring-2 ring-purple-400/50 print:bg-white' 
               : holiday 
@@ -2324,7 +2324,7 @@ export default function Scheduler() {
     }
     const totalCells = days.length;
     const remainingCells = 42 - totalCells;
-    for (let i = 0; i < remainingCells; i++) days.push(<div key={`empty-end-${i}`} className={`min-h-[180px] backdrop-blur-sm border-r border-b print:bg-white print:min-h-[150px]`} style={{ backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.5)' : 'rgba(255, 255, 255, 0.3)', borderColor: darkMode ? 'rgba(45, 45, 68, 0.5)' : 'rgba(255, 255, 255, 0.2)' }}></div>);
+    for (let i = 0; i < remainingCells; i++) days.push(<div key={`empty-end-${i}`} className={`min-h-[60px] backdrop-blur-sm border-r border-b print:bg-white print:min-h-[150px]`} style={{ backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.5)' : 'rgba(255, 255, 255, 0.3)', borderColor: darkMode ? 'rgba(45, 45, 68, 0.5)' : 'rgba(255, 255, 255, 0.2)' }}></div>);
     return days;
   };
 
