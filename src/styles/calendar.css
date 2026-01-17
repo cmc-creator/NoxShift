@@ -1,0 +1,238 @@
+/* React Big Calendar Custom Styles - NoxTitan inspired */
+
+.rbc-calendar {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #f1f5f9;
+  background-color: #0f172a;
+  height: 100%;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.rbc-header {
+  padding: 18px 10px;
+  font-weight: 900;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all 0.3s ease;
+}
+
+.rbc-header:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.2);
+}
+
+.rbc-header + .rbc-header {
+  border-left: 3px solid rgba(139, 92, 246, 0.3);
+}
+
+.rbc-today {
+  background-color: rgba(139, 92, 246, 0.15) !important;
+}
+
+.rbc-day-bg.rbc-today {
+  background-color: rgba(139, 92, 246, 0.15) !important;
+}
+
+.rbc-event {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.rbc-event:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.rbc-event:focus {
+  outline: 2px solid #8b5cf6;
+}
+
+.rbc-month-view {
+  border: 3px solid rgba(139, 92, 246, 0.3);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0f172a;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.rbc-month-row {
+  min-height: 120px !important;
+  border-color: rgba(71, 85, 105, 0.3);
+}
+
+.rbc-day-bg {
+  border-color: rgba(71, 85, 105, 0.3);
+  transition: background-color 0.2s ease;
+}
+
+.rbc-day-bg:hover {
+  background-color: rgba(139, 92, 246, 0.05) !important;
+}
+
+.rbc-off-range-bg {
+  background-color: rgba(15, 23, 42, 0.5);
+}
+
+.rbc-date-cell {
+  padding: 8px;
+}
+
+.rbc-button-link {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.rbc-toolbar {
+  padding: 16px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f1f5f9;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.rbc-toolbar button {
+  color: #f1f5f9;
+  border: 2px solid rgba(139, 92, 246, 0.4);
+  background: rgba(15, 23, 42, 0.8);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.rbc-toolbar button:hover,
+.rbc-toolbar button:focus {
+  background: rgba(139, 92, 246, 0.3);
+  border-color: #8b5cf6;
+  transform: translateY(-2px);
+}
+
+.rbc-toolbar button.rbc-active {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  border-color: #ec4899;
+}
+
+.rbc-time-view {
+  border: 3px solid rgba(139, 92, 246, 0.3);
+  border-radius: 16px;
+  background: #0f172a;
+}
+
+.rbc-time-header-content {
+  border-left: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.rbc-time-content {
+  border-top: 2px solid rgba(139, 92, 246, 0.3);
+}
+
+.rbc-time-slot {
+  border-top: 1px solid rgba(71, 85, 105, 0.2);
+}
+
+.rbc-current-time-indicator {
+  background-color: #ec4899;
+  height: 2px;
+}
+
+.rbc-agenda-view {
+  border: 3px solid rgba(139, 92, 246, 0.3);
+  border-radius: 16px;
+  background: #0f172a;
+}
+
+.rbc-agenda-view table {
+  border-color: rgba(71, 85, 105, 0.3);
+}
+
+.rbc-agenda-view thead > tr > th {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+  border-color: rgba(139, 92, 246, 0.3);
+  padding: 12px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.rbc-agenda-view tbody > tr > td {
+  padding: 12px;
+  border-color: rgba(71, 85, 105, 0.2);
+}
+
+.rbc-agenda-date-cell {
+  font-weight: 600;
+}
+
+.rbc-agenda-time-cell {
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.rbc-agenda-event-cell {
+  color: #f1f5f9;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rbc-calendar {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Selection */
+.rbc-slot-selection {
+  background-color: rgba(139, 92, 246, 0.3);
+  border: 2px solid #8b5cf6;
+}
+
+/* Drag and Drop */
+.rbc-addons-dnd .rbc-addons-dnd-dragging {
+  opacity: 0.5;
+}
+
+.rbc-addons-dnd .rbc-event {
+  cursor: move;
+}
+
+.rbc-addons-dnd .rbc-addons-dnd-over {
+  background-color: rgba(139, 92, 246, 0.1) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .rbc-header {
+    font-size: 14px;
+    padding: 12px 6px;
+  }
+  
+  .rbc-toolbar button {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+  
+  .rbc-event {
+    font-size: 11px;
+    padding: 4px 6px;
+  }
+}

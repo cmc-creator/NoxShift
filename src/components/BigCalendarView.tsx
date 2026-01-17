@@ -8,6 +8,7 @@ import { getDay } from 'date-fns/getDay';
 import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import '../styles/calendar.css';
 
 const locales = { 'en-US': enUS };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
@@ -134,7 +135,7 @@ export default function BigCalendarView({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4" style={{ height: '700px' }}>
+    <div className="rounded-lg p-4" style={{ height: '750px', minHeight: '750px' }}>
       <DnDCalendar
         localizer={localizer}
         events={events}
