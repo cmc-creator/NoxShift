@@ -47,8 +47,8 @@ interface BigCalendarViewProps {
 
 const getThemeColors = (name: string, customHue?: number | null) => {
   let h;
-  if (customHue !== undefined && customHue !== null && customHue !== '') {
-    h = parseInt(String(customHue));
+  if (customHue !== undefined && customHue !== null) {
+    h = customHue;
   } else {
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
