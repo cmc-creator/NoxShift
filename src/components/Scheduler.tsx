@@ -134,6 +134,11 @@ import {
 } from 'firebase/firestore';
 import { app } from '../lib/firebase';
 import { appId as configAppId, initialAuthToken } from '../firebase.config';
+import { OracleAIPanel } from '../features/oracle/OracleAIPanel';
+import { ConflictDetector } from '../features/conflicts/ConflictDetector';
+import { CoverageHeatmap } from '../features/coverage/CoverageHeatmap';
+import { ShiftMarketplace } from '../features/marketplace/ShiftMarketplace';
+import { PTODonations } from '../features/pto/PTODonations';
 
 // --- Firebase Configuration ---
 const db = getFirestore(app);
@@ -416,6 +421,9 @@ export default function Scheduler() {
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [showBulkOps, setShowBulkOps] = useState(false);
   const [showCompareView, setShowCompareView] = useState(false);
+  const [showOracleAI, setShowOracleAI] = useState(false);
+  const [showConflicts, setShowConflicts] = useState(false);
+  const [showPTODonations, setShowPTODonations] = useState(false);
   const [compareMonth, setCompareMonth] = useState<Date>(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const [notifications, setNotifications] = useState<Array<{id: string; type: string; message: string; timestamp: number; read: boolean}>>([]);
   const [swapRequests, setSwapRequests] = useState<ShiftSwapRequest[]>([]);
@@ -3338,6 +3346,26 @@ export default function Scheduler() {
                           <div className="text-xs text-slate-500">Smart scheduling</div>
                         </div>
                       </button>
+                      <button onClick={() => { setShowOracleAI(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <Sparkles className="w-5 h-5 text-purple-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            Oracle AI Insights
+                            <span className="text-[9px] bg-purple-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                          </div>
+                          <div className="text-xs text-slate-500">Predictive analytics & alerts</div>
+                        </div>
+                      </button>
+                      <button onClick={() => { setShowConflicts(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <AlertCircle className="w-5 h-5 text-red-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            Conflict Detector
+                            <span className="text-[9px] bg-red-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                          </div>
+                          <div className="text-xs text-slate-500">Real-time scheduling conflicts</div>
+                        </div>
+                      </button>
                     </div>
                     
                     {/* Employee Management */}
@@ -3398,6 +3426,26 @@ export default function Scheduler() {
                         <div className="flex-1">
                           <div className="font-semibold text-sm">Time-Off Requests</div>
                           <div className="text-xs text-slate-500">Manage absences</div>
+                        </div>
+                      </button>
+                      <button onClick={() => { setShowMarketplace(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <DollarSign className="w-5 h-5 text-green-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            Shift Marketplace
+                            <span className="text-[9px] bg-green-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                          </div>
+                          <div className="text-xs text-slate-500">Bonus shifts & rewards</div>
+                        </div>
+                      </button>
+                      <button onClick={() => { setShowPTODonations(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <Heart className="w-5 h-5 text-pink-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            PTO Donations
+                            <span className="text-[9px] bg-pink-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                          </div>
+                          <div className="text-xs text-slate-500">Support teammates in need</div>
                         </div>
                       </button>
                       <button onClick={() => { setShowSwapModal(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
@@ -8386,6 +8434,47 @@ export default function Scheduler() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Oracle AI Panel */}
+      {showOracleAI && (
+        <OracleAIPanel
+          shifts={shifts}
+          employees={employees}
+          onClose={() => setShowOracleAI(false)}
+        />
+      )}
+
+      {/* Conflict Detector */}
+      {showConflicts && (
+        <ConflictDetector
+          shifts={shifts}
+          onClose={() => setShowConflicts(false)}
+        />
+      )}
+
+      {/* Shift Marketplace */}
+      {showMarketplace && (
+        <ShiftMarketplace
+          onClose={() => setShowMarketplace(false)}
+          employees={employees}
+          onClaimShift={(shiftId, employeeId) => {
+            console.log('Shift claimed:', shiftId, employeeId);
+            setStatus({ type: 'success', msg: 'Shift claimed successfully!' });
+          }}
+        />
+      )}
+
+      {/* PTO Donations */}
+      {showPTODonations && (
+        <PTODonations
+          onClose={() => setShowPTODonations(false)}
+          employees={employees}
+          onDonate={(requestId, employeeId, hours) => {
+            console.log('PTO donated:', requestId, employeeId, hours);
+            setStatus({ type: 'success', msg: `${hours} hours donated!` });
+          }}
+        />
       )}
 
     </div>
