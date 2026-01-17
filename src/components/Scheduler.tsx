@@ -2541,7 +2541,14 @@ export default function Scheduler() {
     return 'Night Shift';
   };
 
-  // Helper function to get department-based color hue
+  /**
+   * Maps department names to unique color hues for visual identification.
+   * Each department is assigned a distinct hue value (0-360) to ensure
+   * different departments are easily distinguishable in the shift matrix.
+   * 
+   * @param department - The department name (e.g., 'Nursing', 'Emergency')
+   * @returns The hue value (0-360) for the department, or null if not found
+   */
   const getDepartmentHue = (department: string | undefined): number | null => {
     if (!department) return null;
     const hueMap: Record<string, number> = {
@@ -2562,13 +2569,21 @@ export default function Scheduler() {
     return hueMap[department] || null;
   };
 
-  // Helper function to render enhanced shift card for matrix view
+  /**
+   * Renders an enhanced shift card for the shift matrix view.
+   * Cards include employee avatar/initials, role badge, department label,
+   * time display, and XP badge. Supports drag-and-drop and hover tooltips.
+   * 
+   * @param shift - The shift data to render
+   * @param index - The index of the shift in the array (for React key)
+   * @returns React component for the shift card
+   */
   const renderEnhancedShiftCard = (shift: Shift, index: number) => {
     const theme = getThemeColors(shift.employeeName, shift.colorHue);
     const isDraft = shift.isDraft;
     const departmentHue = getDepartmentHue(shift.department);
     const finalTheme = shift.colorHue === null && departmentHue !== null ? 
-      getThemeColors(shift.department || '', departmentHue) : theme;
+      getThemeColors(shift.department || 'General', departmentHue) : theme;
 
     return (
       <div
@@ -2644,7 +2659,7 @@ export default function Scheduler() {
                   color: darkMode ? '#f1f5f9' : finalTheme.border,
                   border: `1px solid ${finalTheme.border}60`
                 }}>
-                  {shift.role.substring(0, 3)}
+                  {shift.role.length <= 3 ? shift.role.toUpperCase() : shift.role.substring(0, 3).toUpperCase()}
                 </span>
               )}
             </div>
