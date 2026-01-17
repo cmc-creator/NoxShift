@@ -666,6 +666,17 @@ export default function Scheduler() {
   const [newItemRate, setNewItemRate] = useState('');
   const [newPresetInput, setNewPresetInput] = useState({ label: '', start: '09:00', end: '17:00' });
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>('12h');
+  
+  // Calendar View Customization
+  const [calendarStartHour, setCalendarStartHour] = useState(0); // 0-23 (default: midnight)
+  const [calendarEndHour, setCalendarEndHour] = useState(23); // 0-23 (default: 11pm)
+  const [employeeBadgeSize, setEmployeeBadgeSize] = useState(14); // Font size in px (12-20)
+  const [settingsSectionExpanded, setSettingsSectionExpanded] = useState<{[key: string]: boolean}>({
+    calendar: true,
+    themes: false,
+    display: false,
+    advanced: false
+  });
 
   // AI State
   const [aiLoading, setAiLoading] = useState(false);
@@ -4883,20 +4894,20 @@ export default function Scheduler() {
       )}
 
       {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={() => setShowSettings(false)}>
-          <div className="glass rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in" onClick={() => setShowSettings(false)}>
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-scale-in border-2 border-purple-200 dark:border-purple-800" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-slate-200 dark:border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-slate-600 to-slate-800 p-3 rounded-xl text-white">
-                  <Settings className="w-6 h-6" />
+                <div className="bg-gradient-to-br from-purple-600 to-pink-600 p-3 rounded-xl text-white shadow-lg">
+                  <Settings className="w-7 h-7" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-extrabold gradient-text">Settings</h2>
-                  <p className="text-sm text-slate-500">Customize your scheduling experience</p>
+                  <h2 className="text-3xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">⚙️ Settings</h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Customize every aspect of your scheduler</p>
                 </div>
               </div>
-              <button onClick={() => setShowSettings(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <X className="w-6 h-6" />
+              <button onClick={() => setShowSettings(false)} className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all">
+                <X className="w-6 h-6 text-slate-600 dark:text-slate-400" />
               </button>
             </div>
             <div className="space-y-6">
