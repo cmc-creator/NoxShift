@@ -4,14 +4,14 @@
 Deployments were stuck in "queued" state on Vercel and not progressing to the build phase.
 
 ## Root Cause
-The `vercel.json` configuration file contained **invalid properties** that prevented Vercel from properly initializing the deployment:
+The `vercel.json` configuration file contained **unnecessary explicit configuration** that interfered with Vercel's auto-detection and prevented proper deployment initialization:
 
-### Invalid Configuration (Before)
+### Problematic Configuration (Before)
 ```json
 {
-  "buildCommand": "npm run build",        // ❌ Invalid - not part of vercel.json schema
-  "outputDirectory": "dist",              // ❌ Invalid - not part of vercel.json schema  
-  "framework": "vite",                    // ❌ Invalid - framework is auto-detected
+  "buildCommand": "npm run build",        // ⚠️ Unnecessary - conflicts with auto-detection
+  "outputDirectory": "dist",              // ⚠️ Unnecessary - conflicts with auto-detection
+  "framework": "vite",                    // ⚠️ Problematic - interferes with framework detection
   "rewrites": [
     {
       "source": "/(.*)",
@@ -21,10 +21,14 @@ The `vercel.json` configuration file contained **invalid properties** that preve
 }
 ```
 
-### Why These Properties Are Invalid
-1. **`buildCommand`** - This is not a valid `vercel.json` property. Build commands should be in your `package.json` scripts or configured in the Vercel project settings.
-2. **`outputDirectory`** - This is not a valid `vercel.json` property. Vercel auto-detects the output directory for frameworks like Vite.
-3. **`framework`** - This is managed internally by Vercel and should not be user-specified. Vercel automatically detects frameworks.
+### Why These Properties Caused Issues
+While `buildCommand`, `outputDirectory`, and `framework` are technically valid `vercel.json` properties, they caused problems in this case:
+
+1. **`buildCommand`** - While valid, explicitly setting this when Vercel can auto-detect it from `package.json` can cause conflicts, especially when combined with framework auto-detection.
+2. **`outputDirectory`** - While valid, explicitly setting this for Vite projects can conflict with Vercel's framework-specific auto-detection logic.
+3. **`framework`** - This property can interfere with Vercel's internal framework detection system, especially when the value doesn't exactly match Vercel's expected framework identifiers.
+
+**The combination of these explicit overrides prevented Vercel from properly initializing the build process**, causing deployments to remain stuck in the "queued" state.
 
 ## Solution Applied
 
@@ -41,11 +45,13 @@ The `vercel.json` configuration file contained **invalid properties** that preve
 ```
 
 ### What Changed
-- ✅ Removed `buildCommand` - Vercel uses `npm run build` from `package.json` automatically
-- ✅ Removed `outputDirectory` - Vercel auto-detects `dist` folder for Vite projects
-- ✅ Removed `framework` - Vercel auto-detects Vite framework
+- ✅ Removed `buildCommand` - Allows Vercel to use `npm run build` from `package.json` with proper auto-detection
+- ✅ Removed `outputDirectory` - Allows Vercel to auto-detect `dist` folder for Vite projects
+- ✅ Removed `framework` - Allows Vercel's framework detection to work correctly
 - ✅ Kept `rewrites` for SPA client-side routing support
-- ✅ Changed destination from `/index.html` to `/` (more standard)
+- ✅ Changed destination from `/index.html` to `/` (more standard format)
+
+By removing these explicit overrides, Vercel can now properly detect the framework and use its optimized build configuration for Vite projects.
 
 ## How Vercel Now Works
 
@@ -171,6 +177,6 @@ If issues persist after applying this fix:
 
 ---
 
-**Date Fixed**: January 17, 2026  
+**Date Fixed**: January 17, 2025  
 **Status**: ✅ Configuration Corrected  
 **Next Deploy**: Should succeed automatically
