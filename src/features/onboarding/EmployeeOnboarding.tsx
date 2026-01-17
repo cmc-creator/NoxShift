@@ -260,7 +260,7 @@ export function EmployeeOnboarding({
     {
       id: 4,
       title: '✅ All Set!',
-      subtitle: 'You're ready to start your journey',
+      subtitle: "You're ready to start your journey",
       icon: CheckCircle,
       color: 'from-green-600 to-emerald-600',
       content: (
