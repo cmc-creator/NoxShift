@@ -5,6 +5,7 @@ A modern, feature-rich employee shift scheduling application built with React, T
 ## Features
 
 - 📅 **Smart Scheduling** - Create and manage employee schedules with drag-and-drop
+- 🎯 **Enhanced Shift Matrix View** - Visual grid with department color coding and role badges
 - 👥 **Employee Management** - Track employee details, availability, and preferences
 - 🔄 **Shift Swapping** - Allow employees to request shift swaps
 - 📊 **Analytics & Reports** - View coverage rates, hours worked, and more
@@ -12,6 +13,7 @@ A modern, feature-rich employee shift scheduling application built with React, T
 - 🔔 **Notifications** - Automated reminders for upcoming shifts
 - 📱 **Responsive Design** - Works on desktop, tablet, and mobile
 - 🎨 **Modern UI** - Built with Tailwind CSS and Lucide icons
+- 🎨 **Department Color Coding** - 13 distinct department colors for easy identification
 
 ## Prerequisites
 
@@ -84,6 +86,33 @@ noxshift/
 ├── tailwind.config.js     # Tailwind CSS config
 └── tsconfig.json          # TypeScript config
 ```
+
+## Key Features Spotlight
+
+### Enhanced Shift Matrix View
+
+The shift matrix view provides a comprehensive grid layout for scheduling:
+
+- **Period-Based Rows**: Organize shifts by Day (6am-2pm), Evening (2pm-10pm), and Night (10pm-6am)
+- **Day-Based Columns**: View all shifts across the week (Sun-Sat)
+- **Department Color Coding**: 13 distinct colors for instant department identification:
+  - Nursing (Blue), Emergency (Red), Radiology (Green), Laboratory (Orange)
+  - Pharmacy (Purple), Surgery (Rose), ICU (Sky Blue), Pediatrics (Pink)
+  - Cardiology (Coral), Housekeeping (Cyan), Administration (Indigo)
+  - Security (Lime), General (Light Blue)
+- **Role Badges**: Quick role identification with 3-letter abbreviations
+- **Enhanced Shift Cards**: Larger avatars, colored borders, hover tooltips
+- **Drag-and-Drop**: Move shifts between days and periods seamlessly
+- **Dark Mode Support**: Fully optimized for dark mode viewing
+
+### View the Matrix
+
+1. Navigate to the scheduler
+2. Select "Shift Matrix" from the view dropdown
+3. Use department filters to focus on specific teams
+4. Drag shifts to reschedule, click to edit details
+
+For detailed migration information, see [SHIFT_MATRIX_MIGRATION.md](SHIFT_MATRIX_MIGRATION.md).
 
 ## Tech Stack
 
