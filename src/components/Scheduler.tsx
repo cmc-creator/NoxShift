@@ -3741,6 +3741,8 @@ export default function Scheduler() {
           {calendarView === 'bigcalendar' && (
             <BigCalendarView 
               shifts={shifts}
+              minTime={new Date(1970, 1, 1, calendarStartHour, 0, 0)}
+              maxTime={new Date(1970, 1, 1, calendarEndHour, 59, 59)}
               onEventClick={(shift) => {
                 setEditingShift(shift);
                 setIsModalOpen(true);

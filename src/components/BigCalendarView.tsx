@@ -43,6 +43,8 @@ interface BigCalendarViewProps {
   onEventClick?: (shift: Shift) => void;
   onEventDrop?: (shift: Shift, start: Date, end: Date) => void;
   onSelectSlot?: (start: Date, end: Date) => void;
+  minTime?: Date;
+  maxTime?: Date;
 }
 
 const getThemeColors = (name: string, customHue?: number | null) => {
@@ -69,7 +71,9 @@ export default function BigCalendarView({
   shifts, 
   onEventClick, 
   onEventDrop,
-  onSelectSlot 
+  onSelectSlot,
+  minTime,
+  maxTime
 }: BigCalendarViewProps) {
   // Convert shifts to calendar events
   const events: BigCalendarEvent[] = shifts.map((shift) => {
@@ -157,6 +161,8 @@ export default function BigCalendarView({
         step={30}
         showMultiDayTimes
         popup
+        min={minTime}
+        max={maxTime}
         components={{
           event: ({ event }: any) => {
             const calEvent = event as BigCalendarEvent;
