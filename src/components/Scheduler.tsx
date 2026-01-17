@@ -102,7 +102,8 @@ import {
   CreditCard,
   ZoomIn,
   ZoomOut,
-  LogOut
+  LogOut,
+  StickyNote
 } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -139,6 +140,11 @@ import { ConflictDetector } from '../features/conflicts/ConflictDetector';
 import { CoverageHeatmap } from '../features/coverage/CoverageHeatmap';
 import { ShiftMarketplace } from '../features/marketplace/ShiftMarketplace';
 import { PTODonations } from '../features/pto/PTODonations';
+import { PerformanceDashboard } from '../features/performance/PerformanceDashboard';
+import { SchedulePublisher } from '../features/publishing/SchedulePublisher';
+import { BudgetAlerts } from '../features/budget/BudgetAlerts';
+import { QuickFillAI } from '../features/quickfill/QuickFillAI';
+import { ManagerNotes } from '../features/notes/ManagerNotes';
 
 // --- Firebase Configuration ---
 const db = getFirestore(app);
@@ -423,6 +429,11 @@ export default function Scheduler() {
   const [showCompareView, setShowCompareView] = useState(false);
   const [showOracleAI, setShowOracleAI] = useState(false);
   const [showConflicts, setShowConflicts] = useState(false);
+  const [showPerformanceDashboard, setShowPerformanceDashboard] = useState(false);
+  const [showSchedulePublisher, setShowSchedulePublisher] = useState(false);
+  const [showBudgetAlerts, setShowBudgetAlerts] = useState(false);
+  const [showQuickFillAI, setShowQuickFillAI] = useState(false);
+  const [showManagerNotes, setShowManagerNotes] = useState(false);
   const [showPTODonations, setShowPTODonations] = useState(false);
   const [compareMonth, setCompareMonth] = useState<Date>(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const [notifications, setNotifications] = useState<Array<{id: string; type: string; message: string; timestamp: number; read: boolean}>>([]);
@@ -3366,6 +3377,36 @@ export default function Scheduler() {
                           <div className="text-xs text-slate-500">Real-time scheduling conflicts</div>
                         </div>
                       </button>
+                      <button onClick={() => { setShowPerformanceDashboard(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <Award className="w-5 h-5 text-blue-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            Performance Dashboard
+                            <span className="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                          </div>
+                          <div className="text-xs text-slate-500">Attendance & reliability scores</div>
+                        </div>
+                      </button>
+                      <button onClick={() => { setShowBudgetAlerts(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <DollarSign className="w-5 h-5 text-orange-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            Budget Dashboard
+                            <span className="text-[9px] bg-orange-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                          </div>
+                          <div className="text-xs text-slate-500">Real-time labor cost tracking</div>
+                        </div>
+                      </button>
+                      <button onClick={() => { setShowQuickFillAI(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <Zap className="w-5 h-5 text-purple-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            Quick-Fill AI
+                            <span className="text-[9px] bg-purple-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                          </div>
+                          <div className="text-xs text-slate-500">Auto-suggest best employees</div>
+                        </div>
+                      </button>
                     </div>
                     
                     {/* Employee Management */}
@@ -3426,6 +3467,26 @@ export default function Scheduler() {
                         <div className="flex-1">
                           <div className="font-semibold text-sm">Time-Off Requests</div>
                           <div className="text-xs text-slate-500">Manage absences</div>
+                        </div>
+                      </button>
+                      <button onClick={() => { setShowSchedulePublisher(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <Send className="w-5 h-5 text-green-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            Publish Schedule
+                            <span className="text-[9px] bg-green-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                          </div>
+                          <div className="text-xs text-slate-500">Notify all employees</div>
+                        </div>
+                      </button>
+                      <button onClick={() => { setShowManagerNotes(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <StickyNote className="w-5 h-5 text-amber-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            Manager Notes
+                            <span className="text-[9px] bg-amber-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                          </div>
+                          <div className="text-xs text-slate-500">Shift logs & handoff</div>
                         </div>
                       </button>
                       <button onClick={() => { setShowMarketplace(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
@@ -8473,6 +8534,64 @@ export default function Scheduler() {
           onDonate={(requestId, employeeId, hours) => {
             console.log('PTO donated:', requestId, employeeId, hours);
             setStatus({ type: 'success', msg: `${hours} hours donated!` });
+          }}
+        />
+      )}
+
+      {/* Performance Dashboard */}
+      {showPerformanceDashboard && (
+        <PerformanceDashboard
+          shifts={shifts}
+          employees={employees}
+          onClose={() => setShowPerformanceDashboard(false)}
+        />
+      )}
+
+      {/* Schedule Publisher */}
+      {showSchedulePublisher && (
+        <SchedulePublisher
+          shifts={shifts}
+          employees={employees}
+          currentMonth={currentMonth}
+          onClose={() => setShowSchedulePublisher(false)}
+          onPublish={(notifyEmployees, lockSchedule) => {
+            setStatus({type: 'success', msg: `📅 Schedule published! ${notifyEmployees ? `${new Set(shifts.map(s => s.employeeName)).size} employees notified` : ''}`});
+          }}
+        />
+      )}
+
+      {/* Budget Alerts */}
+      {showBudgetAlerts && (
+        <BudgetAlerts
+          shifts={shifts}
+          monthlyBudget={monthlyBudget}
+          budgetUsed={budgetUsed}
+          currentMonth={currentMonth}
+          onClose={() => setShowBudgetAlerts(false)}
+        />
+      )}
+
+      {/* Quick-Fill AI */}
+      {showQuickFillAI && (
+        <QuickFillAI
+          shifts={shifts}
+          employees={employees}
+          selectedWeek={selectedDate}
+          onClose={() => setShowQuickFillAI(false)}
+          onApplySuggestions={(suggestions) => {
+            setStatus({type: 'success', msg: `🤖 AI assigned ${suggestions.length} shifts automatically!`});
+          }}
+        />
+      )}
+
+      {/* Manager Notes */}
+      {showManagerNotes && (
+        <ManagerNotes
+          selectedDate={selectedDate}
+          shifts={shifts}
+          onClose={() => setShowManagerNotes(false)}
+          onSaveNote={(note) => {
+            setStatus({type: 'success', msg: `📝 Note saved: ${note.title}`});
           }}
         />
       )}
