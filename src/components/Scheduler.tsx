@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import BigCalendarView from './BigCalendarView';
 import { 
   ChevronLeft, 
   ChevronRight,
@@ -383,7 +384,7 @@ export default function Scheduler() {
   const [showShare, setShowShare] = useState(false);
   const [employeePhotos, setEmployeePhotos] = useState<Record<string, string>>({});
   const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([]);
-  const [calendarView, setCalendarView] = useState<'day' | 'week' | 'month' | 'agenda' | 'shift-matrix'>('month');
+  const [calendarView, setCalendarView] = useState<'day' | 'week' | 'month' | 'agenda' | 'shift-matrix' | 'bigcalendar'>('month');
   const [calendarDisplayStyle, setCalendarDisplayStyle] = useState<'standard' | 'compact' | 'list' | 'timeline'>('standard');
   const [personalReminders, setPersonalReminders] = useState<Array<{id: string; title: string; date: string; time: string; notes: string}>>([]);
   const [personalEvents, setPersonalEvents] = useState<Array<{id: string; title: string; date: string; startTime: string; endTime: string; notes: string; color: string}>>([]);
@@ -3171,13 +3172,14 @@ export default function Scheduler() {
             <div className="nox-tracer px-4 py-2 relative print:hidden" style={{'--tracer-color': '#8b5cf6'} as React.CSSProperties}>
               <select 
                 value={calendarView} 
-                onChange={(e) => setCalendarView(e.target.value as 'day' | 'week' | 'month' | 'agenda' | 'shift-matrix')}
+                onChange={(e) => setCalendarView(e.target.value as 'day' | 'week' | 'month' | 'agenda' | 'shift-matrix' | 'bigcalendar')}
                 className="bg-transparent text-white font-bold px-2 py-1 cursor-pointer appearance-none pr-8 outline-none">
                 <option value="day" className="bg-slate-900">Day</option>
                 <option value="week" className="bg-slate-900">Week</option>
                 <option value="month" className="bg-slate-900">Month</option>
                 <option value="shift-matrix" className="bg-slate-900">Shift Matrix</option>
                 <option value="agenda" className="bg-slate-900">Agenda</option>
+                <option value="bigcalendar" className="bg-slate-900">Calendar View</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
             </div>
@@ -3583,6 +3585,41 @@ export default function Scheduler() {
           {calendarView === 'week' && renderWeekView()}
           {calendarView === 'shift-matrix' && renderShiftMatrixView()}
           {calendarView === 'agenda' && renderAgendaView()}
+          {calendarView === 'bigcalendar' && (
+            <BigCalendarView 
+              shifts={shifts}
+              onEventClick={(shift) => {
+                setEditingShift(shift);
+                setIsModalOpen(true);
+              }}
+              onEventDrop={(shift, start, end) => {
+                // Convert date/time to shift format
+                const newDate = start.toISOString().split('T')[0];
+                const newStartTime = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
+                const newEndTime = `${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`;
+                
+                if (shift.id) {
+                  const shiftRef = doc(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`, shift.id);
+                  updateDoc(shiftRef, { 
+                    date: newDate,
+                    startTime: newStartTime,
+                    endTime: newEndTime
+                  }).then(() => {
+                    setStatus({ type: 'success', msg: '✓ Shift updated!' });
+                    setTimeout(() => setStatus({ type: '', msg: '' }), 2000);
+                  }).catch((err) => {
+                    console.error('Update error:', err);
+                    setStatus({ type: 'error', msg: 'Failed to update shift' });
+                  });
+                }
+              }}
+              onSelectSlot={(start, end) => {
+                setSelectedDate(start);
+                setEditingShift(null);
+                setIsModalOpen(true);
+              }}
+            />
+          )}
         </div>
       </main>
 
