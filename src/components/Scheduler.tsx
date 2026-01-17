@@ -3447,7 +3447,7 @@ export default function Scheduler() {
                           </div>
                           <div className="text-xs opacity-75">Social hub, games & more</div>
                         </div>
-                      </a>
+                      </button>
                       <button onClick={() => { setShowEmployeeProfile(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
                         <ImageIcon className="w-5 h-5 text-pink-600" />
                         <div className="flex-1">
