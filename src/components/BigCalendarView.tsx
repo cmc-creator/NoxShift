@@ -99,13 +99,15 @@ export default function BigCalendarView({
     return {
       style: {
         backgroundColor: event.color || '#3b82f6',
-        borderRadius: '6px',
-        opacity: 0.9,
+        borderRadius: '8px',
+        opacity: 0.95,
         color: 'white',
         border: '0px',
         display: 'block',
-        fontSize: '13px',
-        fontWeight: '500',
+        fontSize: '12px',
+        fontWeight: '600',
+        padding: '4px 6px',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
       }
     };
   };
@@ -135,7 +137,7 @@ export default function BigCalendarView({
   };
 
   return (
-    <div className="rounded-lg p-4" style={{ height: '750px', minHeight: '750px' }}>
+    <div className="rounded-2xl p-4 bg-white/90 backdrop-blur-lg shadow-xl" style={{ height: '800px', minHeight: '800px' }}>
       <DnDCalendar
         localizer={localizer}
         events={events}
@@ -151,19 +153,17 @@ export default function BigCalendarView({
         selectable
         eventPropGetter={eventStyleGetter}
         views={['month', 'week', 'day', 'agenda']}
-        defaultView="week"
+        defaultView="month"
         step={30}
         showMultiDayTimes
+        popup
         components={{
           event: ({ event }: any) => {
             const calEvent = event as BigCalendarEvent;
             return (
-              <div className="flex flex-col h-full justify-center px-1">
-                <div className="font-semibold text-xs truncate">{calEvent.employeeName}</div>
-                <div className="text-xs opacity-90 truncate">{calEvent.role}</div>
-                {calEvent.department && (
-                  <div className="text-xs opacity-75 truncate">{calEvent.department}</div>
-                )}
+              <div className="flex flex-col h-full justify-center">
+                <div className="font-bold text-xs truncate leading-tight">{calEvent.employeeName}</div>
+                <div className="text-[10px] opacity-90 truncate">{calEvent.role}</div>
               </div>
             );
           },

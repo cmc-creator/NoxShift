@@ -67,17 +67,20 @@
 }
 
 .rbc-month-row {
-  min-height: 120px !important;
+  min-height: 100px !important;
+  max-height: 120px !important;
   border-color: rgba(71, 85, 105, 0.3);
 }
 
 .rbc-day-bg {
   border-color: rgba(71, 85, 105, 0.3);
   transition: background-color 0.2s ease;
+  min-height: 100px !important;
 }
 
 .rbc-day-bg:hover {
   background-color: rgba(139, 92, 246, 0.05) !important;
+  cursor: pointer;
 }
 
 .rbc-off-range-bg {

@@ -389,7 +389,7 @@ export default function Scheduler() {
   const [showShare, setShowShare] = useState(false);
   const [employeePhotos, setEmployeePhotos] = useState<Record<string, string>>({});
   const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([]);
-  const [calendarView, setCalendarView] = useState<'day' | 'week' | 'month' | 'agenda' | 'shift-matrix' | 'bigcalendar'>('month');
+  const [calendarView, setCalendarView] = useState<'day' | 'week' | 'month' | 'agenda' | 'shift-matrix' | 'bigcalendar'>('bigcalendar');
   const [calendarDisplayStyle, setCalendarDisplayStyle] = useState<'standard' | 'compact' | 'list' | 'timeline'>('standard');
   const [personalReminders, setPersonalReminders] = useState<Array<{id: string; title: string; date: string; time: string; notes: string}>>([]);
   const [personalEvents, setPersonalEvents] = useState<Array<{id: string; title: string; date: string; startTime: string; endTime: string; notes: string; color: string}>>([]);
@@ -3182,12 +3182,12 @@ export default function Scheduler() {
                 value={calendarView} 
                 onChange={(e) => setCalendarView(e.target.value as 'day' | 'week' | 'month' | 'agenda' | 'shift-matrix' | 'bigcalendar')}
                 className="bg-transparent text-white font-bold px-2 py-1 cursor-pointer appearance-none pr-8 outline-none">
-                <option value="day" className="bg-slate-900">Day</option>
+                <option value="bigcalendar" className="bg-slate-900">Modern Calendar (Default)</option>
+                <option value="month" className="bg-slate-900">Classic Month</option>
                 <option value="week" className="bg-slate-900">Week</option>
-                <option value="month" className="bg-slate-900">Month</option>
+                <option value="day" className="bg-slate-900">Day</option>
                 <option value="shift-matrix" className="bg-slate-900">Shift Matrix</option>
                 <option value="agenda" className="bg-slate-900">Agenda</option>
-                <option value="bigcalendar" className="bg-slate-900">Calendar View</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
             </div>
