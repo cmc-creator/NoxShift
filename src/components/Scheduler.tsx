@@ -383,7 +383,7 @@ export default function Scheduler() {
   const [showShare, setShowShare] = useState(false);
   const [employeePhotos, setEmployeePhotos] = useState<Record<string, string>>({});
   const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([]);
-  const [calendarView, setCalendarView] = useState<'day' | 'week' | 'month' | 'agenda'>('month');
+  const [calendarView, setCalendarView] = useState<'day' | 'week' | 'month' | 'agenda' | 'shift-matrix'>('month');
   const [calendarDisplayStyle, setCalendarDisplayStyle] = useState<'standard' | 'compact' | 'list' | 'timeline'>('standard');
   const [personalReminders, setPersonalReminders] = useState<Array<{id: string; title: string; date: string; time: string; notes: string}>>([]);
   const [personalEvents, setPersonalEvents] = useState<Array<{id: string; title: string; date: string; startTime: string; endTime: string; notes: string; color: string}>>([]);
@@ -2533,6 +2533,494 @@ export default function Scheduler() {
     );
   };
 
+  // Helper function to categorize shift by time period
+  const getShiftPeriod = (startTime: string): 'Day Shift' | 'Evening Shift' | 'Night Shift' => {
+    const hour = parseInt(startTime.split(':')[0]);
+    if (hour >= 6 && hour < 14) return 'Day Shift';
+    if (hour >= 14 && hour < 22) return 'Evening Shift';
+    return 'Night Shift';
+  };
+
+  // Shift Matrix View Renderer - Grid layout by shift period and day
+  const renderShiftMatrixView = () => {
+    const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+    const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+    
+    // Define shift periods
+    const shiftPeriods = [
+      { label: 'Day Shift', timeRange: '6:00 AM - 2:00 PM', period: 'Day Shift' as const },
+      { label: 'Evening Shift', timeRange: '2:00 PM - 10:00 PM', period: 'Evening Shift' as const },
+      { label: 'Night Shift', timeRange: '10:00 PM - 6:00 AM', period: 'Night Shift' as const }
+    ];
+
+    // Build calendar days array
+    const calendarDays: Array<{day: number | null; dateObj: Date | null}> = [];
+    
+    // Add empty cells for days before month starts
+    for (let i = 0; i < firstDay; i++) {
+      calendarDays.push({ day: null, dateObj: null });
+    }
+    
+    // Add actual days
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      calendarDays.push({ day, dateObj });
+    }
+
+    return (
+      <div className="rounded-3xl overflow-hidden animate-scale-in" style={{
+        backgroundColor: darkMode ? 'rgba(15, 15, 35, 0.6)' : 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(148, 163, 184, 0.2)',
+        boxShadow: darkMode ? '0 20px 60px rgba(0, 0, 0, 0.5)' : '0 10px 40px rgba(0, 0, 0, 0.1)'
+      }}>
+        {/* Header Row - Days of Week */}
+        <div className="grid border-b" style={{
+          gridTemplateColumns: '160px repeat(7, 1fr)',
+          borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(148, 163, 184, 0.2)',
+          background: darkMode ? 'linear-gradient(135deg, rgba(88, 28, 135, 0.3), rgba(79, 70, 229, 0.3))' : 'linear-gradient(135deg, rgba(243, 232, 255, 0.5), rgba(252, 231, 243, 0.5))'
+        }}>
+          <div className="py-3 px-4 text-xs font-bold uppercase tracking-widest text-center border-r" style={{
+            color: darkMode ? 'rgba(255, 255, 255, 0.9)' : '#475569',
+            borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(148, 163, 184, 0.2)'
+          }}>
+            Shift Period
+          </div>
+          {DAYS.map(day => (
+            <div key={day} className="py-3 text-center text-xs font-bold uppercase tracking-widest" style={{
+              color: darkMode ? 'rgba(255, 255, 255, 0.9)' : '#475569'
+            }}>
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Matrix Grid - Each Row is a Shift Period */}
+        {shiftPeriods.map((shiftPeriod) => (
+          <div key={shiftPeriod.period} className="grid border-b" style={{
+            gridTemplateColumns: '160px repeat(7, 1fr)',
+            borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(148, 163, 184, 0.2)'
+          }}>
+            {/* Shift Period Label Column */}
+            <div className="py-3 px-4 border-r flex flex-col justify-center" style={{
+              backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.5)' : 'rgba(255, 255, 255, 0.3)',
+              borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(148, 163, 184, 0.2)'
+            }}>
+              <div className="font-bold text-sm" style={{
+                color: darkMode ? '#f1f5f9' : '#1e293b'
+              }}>
+                {shiftPeriod.label}
+              </div>
+              <div className="text-xs" style={{
+                color: darkMode ? '#94a3b8' : '#64748b'
+              }}>
+                {shiftPeriod.timeRange}
+              </div>
+            </div>
+
+            {/* Day Cells for this Shift Period */}
+            {calendarDays.slice(0, 7).map((dayInfo, colIndex) => {
+              if (!dayInfo.dateObj || !dayInfo.day) {
+                return (
+                  <div key={`empty-${shiftPeriod.period}-${colIndex}`} className="border-r p-2" style={{
+                    backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+                    borderColor: darkMode ? 'rgba(45, 45, 68, 0.5)' : 'rgba(255, 255, 255, 0.2)'
+                  }} />
+                );
+              }
+
+              const dateStr = dayInfo.dateObj.toISOString().split('T')[0];
+              const dayShifts = shifts.filter(s => {
+                const matchesDate = s.date.startsWith(dateStr);
+                const matchesDept = selectedDepartment === 'All' || s.department === selectedDepartment || (!s.department && selectedDepartment === 'General');
+                const matchesPeriod = !s.isTimeOff && getShiftPeriod(s.startTime) === shiftPeriod.period;
+                return matchesDate && matchesDept && matchesPeriod;
+              }).sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+              const isToday = new Date().toDateString() === dayInfo.dateObj.toDateString();
+              const holiday = isHoliday(dayInfo.dateObj);
+
+              return (
+                <div
+                  key={`${shiftPeriod.period}-${dayInfo.day}`}
+                  onClick={() => handleDayClick(dayInfo.day!)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const shiftId = e.dataTransfer.getData('shiftId');
+                    const sourceDate = e.dataTransfer.getData('sourceDate');
+                    if (shiftId && sourceDate !== dateStr) {
+                      const shiftRef = doc(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`, shiftId);
+                      updateDoc(shiftRef, { date: dateStr }).then(() => {
+                        setStatus({ type: 'success', msg: '✓ Shift moved successfully!' });
+                        setTimeout(() => setStatus({ type: '', msg: '' }), 2000);
+                      }).catch((err) => {
+                        console.error('Drag drop error:', err);
+                        setStatus({ type: 'error', msg: 'Failed to move shift' });
+                      });
+                    }
+                  }}
+                  className={`border-r p-2 transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-[1.01] ${
+                    isToday ? 'ring-2 ring-purple-400/50' : ''
+                  }`}
+                  style={{
+                    backgroundColor: isToday 
+                      ? 'rgba(139, 92, 246, 0.15)'
+                      : holiday 
+                      ? (darkMode ? 'rgba(251, 191, 36, 0.1)' : 'rgba(251, 191, 36, 0.2)')
+                      : darkMode 
+                      ? 'rgba(0, 0, 0, 0.2)' 
+                      : 'rgba(255, 255, 255, 0.5)',
+                    borderColor: darkMode ? 'rgba(71, 85, 105, 0.3)' : 'rgba(148, 163, 184, 0.2)'
+                  }}
+                >
+                  {/* Day Number Badge - Only show in first row */}
+                  {shiftPeriod.period === 'Day Shift' && (
+                    <div className="flex justify-between items-start mb-1">
+                      <span className={`text-xs font-bold w-5 h-5 flex items-center justify-center rounded-lg ${
+                        isToday 
+                          ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white' 
+                          : holiday
+                          ? 'bg-gradient-to-br from-yellow-400 to-orange-400 text-white'
+                          : ''
+                      }`} style={{
+                        color: !isToday && !holiday ? (darkMode ? '#f1f5f9' : '#1e293b') : undefined
+                      }}>
+                        {dayInfo.day}
+                      </span>
+                      {holiday && (
+                        <div className="text-[8px] font-bold text-yellow-600" title={holiday.name}>
+                          {holiday.type === 'federal' ? '🎊' : '🎉'}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Shift Cards - Compact */}
+                  <div className="space-y-1">
+                    {dayShifts.map((shift, index) => {
+                      const theme = getThemeColors(shift.employeeName, shift.colorHue);
+                      const isDraft = shift.isDraft;
+
+                      return (
+                        <div
+                          key={shift.id}
+                          draggable="true"
+                          onDragStart={(e) => {
+                            e.stopPropagation();
+                            e.dataTransfer.effectAllowed = 'move';
+                            e.dataTransfer.setData('text/plain', shift.id!);
+                            e.dataTransfer.setData('shiftId', shift.id!);
+                            e.dataTransfer.setData('sourceDate', shift.date);
+                            (e.target as HTMLElement).style.opacity = '0.5';
+                          }}
+                          onDragEnd={(e) => {
+                            (e.target as HTMLElement).style.opacity = '1';
+                          }}
+                          onClick={(e) => handleShiftClick(e, shift)}
+                          className={`rounded-lg p-1.5 cursor-move hover:cursor-grab active:cursor-grabbing transition-all hover:scale-[1.02] ${
+                            isDraft ? 'opacity-90 border-dashed border' : ''
+                          }`}
+                          style={{
+                            backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : theme.bg,
+                            borderLeft: darkMode ? `3px solid ${theme.border}` : 'none',
+                            borderColor: isDraft ? theme.bg : 'transparent',
+                            boxShadow: darkMode
+                              ? '0 2px 4px rgba(0, 0, 0, 0.3)'
+                              : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                            border: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)'
+                          }}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            {/* Photo/Initial Circle */}
+                            {employeePhotos[shift.employeeName] ? (
+                              <img
+                                src={employeePhotos[shift.employeeName]}
+                                alt={shift.employeeName}
+                                className="w-6 h-6 rounded-md object-cover border border-white/20 shadow-sm shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEmployeeProfile(shift.employeeName);
+                                  setShowEmployeeProfile(true);
+                                }}
+                              />
+                            ) : (
+                              <div
+                                className="w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold border border-white/20 shadow-sm shrink-0 cursor-pointer"
+                                style={{ background: `linear-gradient(135deg, ${theme.bg} 0%, ${theme.border} 100%)`, color: theme.text }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEmployeeProfile(shift.employeeName);
+                                  setShowEmployeeProfile(true);
+                                }}
+                              >
+                                {getEmployeeInitials(shift.employeeName)}
+                              </div>
+                            )}
+
+                            {/* Employee Name & Time */}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-[10px] font-bold truncate" style={{
+                                color: darkMode ? '#f1f5f9' : theme.text
+                              }}>
+                                {shift.employeeName}
+                              </div>
+                              <div className="text-[9px] font-medium truncate flex items-center gap-0.5" style={{
+                                color: darkMode ? '#10b981' : theme.text,
+                                opacity: 0.8
+                              }}>
+                                <Clock className="w-2.5 h-2.5 inline" />
+                                {formatTime(shift.startTime, timeFormat === '24h')}
+                              </div>
+                            </div>
+
+                            {/* XP Badge */}
+                            {employeeXP[shift.employeeName] && employeeXP[shift.employeeName].total > 0 && (
+                              <div className="flex items-center gap-0.5 bg-gradient-to-r from-yellow-400 to-amber-500 px-1 py-0.5 rounded text-[8px] font-extrabold text-black">
+                                <Star className="w-2 h-2" />
+                                {employeeXP[shift.employeeName].total}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+
+        {/* Additional Weeks if Month has more than 7 days */}
+        {calendarDays.length > 7 && (
+          <>
+            {/* Week 2 */}
+            {calendarDays.slice(7, 14).length > 0 && shiftPeriods.map((shiftPeriod) => (
+              <div key={`week2-${shiftPeriod.period}`} className="grid border-b" style={{
+                gridTemplateColumns: '160px repeat(7, 1fr)',
+                borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(148, 163, 184, 0.2)'
+              }}>
+                <div className="py-3 px-4 border-r flex flex-col justify-center" style={{
+                  backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.5)' : 'rgba(255, 255, 255, 0.3)',
+                  borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(148, 163, 184, 0.2)'
+                }}>
+                  <div className="font-bold text-sm" style={{
+                    color: darkMode ? '#f1f5f9' : '#1e293b'
+                  }}>
+                    {shiftPeriod.label}
+                  </div>
+                  <div className="text-xs" style={{
+                    color: darkMode ? '#94a3b8' : '#64748b'
+                  }}>
+                    {shiftPeriod.timeRange}
+                  </div>
+                </div>
+
+                {calendarDays.slice(7, 14).map((dayInfo, colIndex) => {
+                  if (!dayInfo.dateObj || !dayInfo.day) {
+                    return (
+                      <div key={`empty-week2-${shiftPeriod.period}-${colIndex}`} className="border-r p-2" style={{
+                        backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+                        borderColor: darkMode ? 'rgba(45, 45, 68, 0.5)' : 'rgba(255, 255, 255, 0.2)'
+                      }} />
+                    );
+                  }
+
+                  const dateStr = dayInfo.dateObj.toISOString().split('T')[0];
+                  const dayShifts = shifts.filter(s => {
+                    const matchesDate = s.date.startsWith(dateStr);
+                    const matchesDept = selectedDepartment === 'All' || s.department === selectedDepartment || (!s.department && selectedDepartment === 'General');
+                    const matchesPeriod = !s.isTimeOff && getShiftPeriod(s.startTime) === shiftPeriod.period;
+                    return matchesDate && matchesDept && matchesPeriod;
+                  }).sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+                  const isToday = new Date().toDateString() === dayInfo.dateObj.toDateString();
+                  const holiday = isHoliday(dayInfo.dateObj);
+
+                  return (
+                    <div
+                      key={`week2-${shiftPeriod.period}-${dayInfo.day}`}
+                      onClick={() => handleDayClick(dayInfo.day!)}
+                      className={`border-r p-2 transition-all cursor-pointer hover:shadow-lg ${
+                        isToday ? 'ring-2 ring-purple-400/50' : ''
+                      }`}
+                      style={{
+                        backgroundColor: isToday 
+                          ? 'rgba(139, 92, 246, 0.15)'
+                          : holiday 
+                          ? (darkMode ? 'rgba(251, 191, 36, 0.1)' : 'rgba(251, 191, 36, 0.2)')
+                          : darkMode 
+                          ? 'rgba(0, 0, 0, 0.2)' 
+                          : 'rgba(255, 255, 255, 0.5)',
+                        borderColor: darkMode ? 'rgba(71, 85, 105, 0.3)' : 'rgba(148, 163, 184, 0.2)'
+                      }}
+                    >
+                      {shiftPeriod.period === 'Day Shift' && (
+                        <div className="flex justify-between items-start mb-1">
+                          <span className={`text-xs font-bold w-5 h-5 flex items-center justify-center rounded-lg ${
+                            isToday ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white' : ''
+                          }`} style={{
+                            color: !isToday ? (darkMode ? '#f1f5f9' : '#1e293b') : undefined
+                          }}>
+                            {dayInfo.day}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="space-y-1">
+                        {dayShifts.map((shift) => {
+                          const theme = getThemeColors(shift.employeeName, shift.colorHue);
+                          return (
+                            <div
+                              key={shift.id}
+                              onClick={(e) => handleShiftClick(e, shift)}
+                              className="rounded-lg p-1.5 cursor-pointer transition-all hover:scale-[1.02]"
+                              style={{
+                                backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : theme.bg,
+                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                              }}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <div
+                                  className="w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold"
+                                  style={{ background: theme.bg, color: theme.text }}
+                                >
+                                  {getEmployeeInitials(shift.employeeName)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[10px] font-bold truncate" style={{
+                                    color: darkMode ? '#f1f5f9' : theme.text
+                                  }}>
+                                    {shift.employeeName}
+                                  </div>
+                                  <div className="text-[9px] truncate" style={{
+                                    color: darkMode ? '#10b981' : theme.text
+                                  }}>
+                                    {formatTime(shift.startTime, timeFormat === '24h')}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+
+            {/* Additional weeks... continue pattern for weeks 3-5 if needed */}
+            {[14, 21, 28, 35].map((weekStart, weekIndex) => {
+              if (calendarDays.slice(weekStart, weekStart + 7).length === 0) return null;
+              
+              return shiftPeriods.map((shiftPeriod) => (
+                <div key={`week${weekIndex + 3}-${shiftPeriod.period}`} className="grid border-b" style={{
+                  gridTemplateColumns: '160px repeat(7, 1fr)',
+                  borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(148, 163, 184, 0.2)'
+                }}>
+                  <div className="py-3 px-4 border-r flex flex-col justify-center" style={{
+                    backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.5)' : 'rgba(255, 255, 255, 0.3)',
+                    borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(148, 163, 184, 0.2)'
+                  }}>
+                    <div className="font-bold text-sm" style={{
+                      color: darkMode ? '#f1f5f9' : '#1e293b'
+                    }}>
+                      {shiftPeriod.label}
+                    </div>
+                    <div className="text-xs" style={{
+                      color: darkMode ? '#94a3b8' : '#64748b'
+                    }}>
+                      {shiftPeriod.timeRange}
+                    </div>
+                  </div>
+
+                  {calendarDays.slice(weekStart, weekStart + 7).map((dayInfo, colIndex) => {
+                    if (!dayInfo.dateObj || !dayInfo.day) {
+                      return (
+                        <div key={`empty-week${weekIndex + 3}-${shiftPeriod.period}-${colIndex}`} className="border-r p-2" style={{
+                          backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+                          borderColor: darkMode ? 'rgba(45, 45, 68, 0.5)' : 'rgba(255, 255, 255, 0.2)'
+                        }} />
+                      );
+                    }
+
+                    const dateStr = dayInfo.dateObj.toISOString().split('T')[0];
+                    const dayShifts = shifts.filter(s => {
+                      const matchesDate = s.date.startsWith(dateStr);
+                      const matchesDept = selectedDepartment === 'All' || s.department === selectedDepartment || (!s.department && selectedDepartment === 'General');
+                      const matchesPeriod = !s.isTimeOff && getShiftPeriod(s.startTime) === shiftPeriod.period;
+                      return matchesDate && matchesDept && matchesPeriod;
+                    }).sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+                    const isToday = new Date().toDateString() === dayInfo.dateObj.toDateString();
+
+                    return (
+                      <div
+                        key={`week${weekIndex + 3}-${shiftPeriod.period}-${dayInfo.day}`}
+                        onClick={() => handleDayClick(dayInfo.day!)}
+                        className={`border-r p-2 transition-all cursor-pointer ${
+                          isToday ? 'ring-2 ring-purple-400/50' : ''
+                        }`}
+                        style={{
+                          backgroundColor: isToday 
+                            ? 'rgba(139, 92, 246, 0.15)'
+                            : darkMode 
+                            ? 'rgba(0, 0, 0, 0.2)' 
+                            : 'rgba(255, 255, 255, 0.5)',
+                          borderColor: darkMode ? 'rgba(71, 85, 105, 0.3)' : 'rgba(148, 163, 184, 0.2)'
+                        }}
+                      >
+                        {shiftPeriod.period === 'Day Shift' && (
+                          <div className="mb-1">
+                            <span className={`text-xs font-bold ${isToday ? 'bg-purple-500 text-white px-1 rounded' : ''}`} style={{
+                              color: !isToday ? (darkMode ? '#f1f5f9' : '#1e293b') : undefined
+                            }}>
+                              {dayInfo.day}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="space-y-1">
+                          {dayShifts.map((shift) => {
+                            const theme = getThemeColors(shift.employeeName, shift.colorHue);
+                            return (
+                              <div
+                                key={shift.id}
+                                onClick={(e) => handleShiftClick(e, shift)}
+                                className="rounded-lg p-1.5 cursor-pointer"
+                                style={{
+                                  backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : theme.bg,
+                                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                                }}
+                              >
+                                <div className="text-[10px] font-bold truncate" style={{
+                                  color: darkMode ? '#f1f5f9' : theme.text
+                                }}>
+                                  {shift.employeeName}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ));
+            })}
+          </>
+        )}
+      </div>
+    );
+  };
+
   if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
 
   const modalTheme = getThemeColors(formData.employeeName || 'Preview', formData.colorHue);
@@ -2617,11 +3105,12 @@ export default function Scheduler() {
             <div className="nox-tracer px-4 py-2 relative print:hidden" style={{'--tracer-color': '#8b5cf6'} as React.CSSProperties}>
               <select 
                 value={calendarView} 
-                onChange={(e) => setCalendarView(e.target.value as 'day' | 'week' | 'month' | 'agenda')}
+                onChange={(e) => setCalendarView(e.target.value as 'day' | 'week' | 'month' | 'agenda' | 'shift-matrix')}
                 className="bg-transparent text-white font-bold px-2 py-1 cursor-pointer appearance-none pr-8 outline-none">
                 <option value="day" className="bg-slate-900">Day</option>
                 <option value="week" className="bg-slate-900">Week</option>
                 <option value="month" className="bg-slate-900">Month</option>
+                <option value="shift-matrix" className="bg-slate-900">Shift Matrix</option>
                 <option value="agenda" className="bg-slate-900">Agenda</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
@@ -3026,6 +3515,7 @@ export default function Scheduler() {
 
           {calendarView === 'day' && renderDayView()}
           {calendarView === 'week' && renderWeekView()}
+          {calendarView === 'shift-matrix' && renderShiftMatrixView()}
           {calendarView === 'agenda' && renderAgendaView()}
         </div>
       </main>
