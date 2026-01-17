@@ -2557,7 +2557,7 @@ export default function Scheduler() {
       'Housekeeping': 180,
       'Administration': 240,
       'Security': 90,
-      'General': 200
+      'General': 220  // Changed from 200 to 220 to avoid conflict with ICU
     };
     return hueMap[department] || null;
   };
@@ -2587,16 +2587,18 @@ export default function Scheduler() {
         }}
         onClick={(e) => handleShiftClick(e, shift)}
         className={`group relative rounded-lg p-1.5 cursor-move hover:cursor-grab active:cursor-grabbing transition-all hover:scale-[1.03] hover:shadow-xl ${
-          isDraft ? 'opacity-90 border-dashed border-2' : ''
+          isDraft ? 'opacity-90' : ''
         }`}
         style={{
           backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : finalTheme.bg,
           borderLeft: `4px solid ${finalTheme.border}`,
-          borderColor: isDraft ? finalTheme.border : undefined,
+          borderRight: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
+          borderTop: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
+          borderBottom: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
+          borderStyle: isDraft ? 'dashed' : 'solid',
           boxShadow: darkMode
             ? `0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)`
-            : `0 2px 8px rgba(0, 0, 0, 0.1)`,
-          border: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)'
+            : `0 2px 8px rgba(0, 0, 0, 0.1)`
         }}
       >
         <div className="flex items-start gap-1.5">
