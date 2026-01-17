@@ -2686,8 +2686,9 @@ export default function Scheduler() {
           {/* Employee Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 mb-0.5">
-              <div className="text-[10px] font-bold truncate" style={{
-                color: darkMode ? '#f1f5f9' : finalTheme.text
+              <div className="font-bold truncate" style={{
+                color: darkMode ? '#f1f5f9' : finalTheme.text,
+                fontSize: `${employeeBadgeSize}px`
               }}>
                 {shift.employeeName}
               </div>
@@ -4910,293 +4911,263 @@ export default function Scheduler() {
                 <X className="w-6 h-6 text-slate-600 dark:text-slate-400" />
               </button>
             </div>
-            <div className="space-y-6">
-              {/* Time Format Setting */}
-              <div className="glass rounded-xl p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-slate-600" />
-                      Time Format
-                    </h3>
-                    <p className="text-sm text-slate-600 mb-4">Choose how times are displayed throughout the scheduler</p>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => {
-                          setTimeFormat('12h');
-                          localStorage.setItem('noxshift-time-format', '12h');
-                          setStatus({ type: 'success', msg: '12-hour format selected' });
-                        }}
-                        className={`px-6 py-3 rounded-xl font-bold transition-all ${
-                          timeFormat === '12h'
-                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                            : 'bg-white/50 text-slate-700 hover:bg-white/80'
-                        }`}
-                      >
-                        12-Hour (3:00 PM)
-                      </button>
-                      <button
-                        onClick={() => {
-                          setTimeFormat('24h');
-                          localStorage.setItem('noxshift-time-format', '24h');
-                          setStatus({ type: 'success', msg: '24-hour format selected' });
-                        }}
-                        className={`px-6 py-3 rounded-xl font-bold transition-all ${
-                          timeFormat === '24h'
-                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                            : 'bg-white/50 text-slate-700 hover:bg-white/80'
-                        }`}
-                      >
-                        24-Hour (15:00)
-                      </button>
+
+            {/* Settings Content with Expandable Sections */}
+            <div className="space-y-3">
+              
+              {/* CALENDAR VIEW SETTINGS */}
+              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-2xl border-2 border-blue-200 dark:border-blue-800 overflow-hidden">
+                <button
+                  onClick={() => setSettingsSectionExpanded({...settingsSectionExpanded, calendar: !settingsSectionExpanded.calendar})}
+                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <div className="text-left">
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-white">📅 Calendar View</h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Time range, display, and view options</p>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Privacy Setting */}
-              <div className="glass rounded-xl p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
-                      {usePrivateStorage ? <Lock className="w-5 h-5 text-green-600" /> : <Globe className="w-5 h-5 text-blue-600" />}
-                      Storage Mode
-                    </h3>
-                    <p className="text-sm text-slate-600 mb-4">
-                      {usePrivateStorage 
-                        ? 'Your schedule is private and only visible to you' 
-                        : 'Your schedule is shared publicly with your team'}
-                    </p>
-                    <button
-                      onClick={() => setUsePrivateStorage(!usePrivateStorage)}
-                      className="px-6 py-3 rounded-xl font-bold transition-all bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white shadow-lg"
-                    >
-                      Switch to {usePrivateStorage ? 'Public' : 'Private'} Mode
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Visual Customization */}
-              <div className="glass rounded-xl p-6">
-                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <Palette className="w-5 h-5 text-purple-600" />
-                  Visual Customization
-                </h3>
-                <p className="text-sm text-slate-600 mb-4">Customize every visual detail of your scheduler</p>
-                
-                <div className="space-y-4">
-                  {/* Calendar Background */}
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 mb-1 block">Calendar Cell Background</label>
-                    <input 
-                      type="color" 
-                      value={customization.calendarBg}
-                      onChange={(e) => setCustomization({...customization, calendarBg: e.target.value})}
-                      className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
-                    />
-                  </div>
-                  
-                  {/* Calendar Border */}
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 mb-1 block">Calendar Border Color</label>
-                    <input 
-                      type="color" 
-                      value={customization.calendarBorder}
-                      onChange={(e) => setCustomization({...customization, calendarBorder: e.target.value})}
-                      className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
-                    />
-                  </div>
-                  
-                  {/* Calendar Text */}
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 mb-1 block">Calendar Text Color</label>
-                    <input 
-                      type="color" 
-                      value={customization.calendarText}
-                      onChange={(e) => setCustomization({...customization, calendarText: e.target.value})}
-                      className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
-                    />
-                  </div>
-                  
-                  {/* Today Highlight */}
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 mb-1 block">Today Highlight Color</label>
-                    <input 
-                      type="color" 
-                      value={customization.todayHighlight}
-                      onChange={(e) => setCustomization({...customization, todayHighlight: e.target.value})}
-                      className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
-                    />
-                  </div>
-                  
-                  {/* Dark Mode Settings */}
-                  <div className="border-t border-slate-200 pt-4">
-                    <h4 className="text-sm font-bold text-slate-700 mb-3">Dark Mode Colors</h4>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-xs font-bold text-slate-700 mb-1 block">Dark Mode Background</label>
-                        <input 
-                          type="color" 
-                          value={customization.darkModeCalendarBg}
-                          onChange={(e) => setCustomization({...customization, darkModeCalendarBg: e.target.value})}
-                          className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
-                        />
+                  <ChevronRight className={`w-5 h-5 text-slate-600 dark:text-slate-400 transition-transform ${settingsSectionExpanded.calendar ? 'rotate-90' : ''}`} />
+                </button>
+                {settingsSectionExpanded.calendar && (
+                  <div className="px-6 py-4 space-y-4 bg-white/50 dark:bg-slate-800/50">
+                    {/* Calendar Hour Range */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">📍 Calendar Hour Range (Perfect for Reception 8AM-8PM!)</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Start Hour</label>
+                          <select
+                            value={calendarStartHour}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              setCalendarStartHour(val);
+                              localStorage.setItem('noxshift-calendar-start', val.toString());
+                              setStatus({type: 'success', msg: `Calendar starts at ${val}:00`});
+                            }}
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-800 dark:text-white focus:border-blue-500 focus:outline-none"
+                          >
+                            {Array.from({length: 24}, (_, i) => (
+                              <option key={i} value={i}>{i === 0 ? '12 AM' : i < 12 ? `${i} AM` : i === 12 ? '12 PM' : `${i-12} PM`}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">End Hour</label>
+                          <select
+                            value={calendarEndHour}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              setCalendarEndHour(val);
+                              localStorage.setItem('noxshift-calendar-end', val.toString());
+                              setStatus({type: 'success', msg: `Calendar ends at ${val}:00`});
+                            }}
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-800 dark:text-white focus:border-blue-500 focus:outline-none"
+                          >
+                            {Array.from({length: 24}, (_, i) => (
+                              <option key={i} value={i}>{i === 0 ? '12 AM' : i < 12 ? `${i} AM` : i === 12 ? '12 PM' : `${i-12} PM`}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
-                      <div>
-                        <label className="text-xs font-bold text-slate-700 mb-1 block">Dark Mode Border</label>
-                        <input 
-                          type="color" 
-                          value={customization.darkModeCalendarBorder}
-                          onChange={(e) => setCustomization({...customization, darkModeCalendarBorder: e.target.value})}
-                          className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
-                        />
+                      <div className="mt-3 flex gap-2">
+                        <button onClick={() => { setCalendarStartHour(8); setCalendarEndHour(20); localStorage.setItem('noxshift-calendar-start', '8'); localStorage.setItem('noxshift-calendar-end', '20'); setStatus({type: 'success', msg: 'Set to 8AM-8PM! 🎯'}); }} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-semibold transition-all shadow-md">Reception (8AM-8PM)</button>
+                        <button onClick={() => { setCalendarStartHour(6); setCalendarEndHour(22); localStorage.setItem('noxshift-calendar-start', '6'); localStorage.setItem('noxshift-calendar-end', '22'); setStatus({type: 'success', msg: 'Set to 6AM-10PM'}); }} className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-sm font-semibold transition-all">Extended (6AM-10PM)</button>
+                        <button onClick={() => { setCalendarStartHour(0); setCalendarEndHour(23); localStorage.setItem('noxshift-calendar-start', '0'); localStorage.setItem('noxshift-calendar-end', '23'); setStatus({type: 'success', msg: 'Reset to 24hr'}); }} className="px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg text-sm font-semibold transition-all">24 Hours</button>
                       </div>
-                      <div>
-                        <label className="text-xs font-bold text-slate-700 mb-1 block">Dark Mode Text</label>
-                        <input 
-                          type="color" 
-                          value={customization.darkModeCalendarText}
-                          onChange={(e) => setCustomization({...customization, darkModeCalendarText: e.target.value})}
-                          className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
-                        />
+                    </div>
+                    
+                    {/* Employee Badge Size */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">👤 Employee Name Size: {employeeBadgeSize}px</label>
+                      <input
+                        type="range"
+                        min="12"
+                        max="20"
+                        value={employeeBadgeSize}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          setEmployeeBadgeSize(val);
+                          localStorage.setItem('noxshift-badge-size', val.toString());
+                        }}
+                        className="w-full h-3 bg-blue-200 dark:bg-blue-800 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        <span>Smaller</span>
+                        <span>Larger & Easier to Read</span>
+                      </div>
+                    </div>
+
+                    {/* Time Format */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">🕐 Time Format</label>
+                      <div className="flex gap-3">
+                        <button onClick={() => { setTimeFormat('12h'); localStorage.setItem('noxshift-time-format', '12h'); setStatus({type: 'success', msg: '12-hour format'}); }} className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all ${timeFormat === '12h' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'}`}>12h (3:00 PM)</button>
+                        <button onClick={() => { setTimeFormat('24h'); localStorage.setItem('noxshift-time-format', '24h'); setStatus({type: 'success', msg: '24-hour format'}); }} className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all ${timeFormat === '24h' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'}`}>24h (15:00)</button>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Employee Name Styling */}
-                  <div className="border-t border-slate-200 pt-4">
-                    <h4 className="text-sm font-bold text-slate-700 mb-3">Employee Name Styling</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <input 
-                          type="checkbox" 
-                          checked={customization.employeeNameBorder}
-                          onChange={(e) => setCustomization({...customization, employeeNameBorder: e.target.checked})}
-                          className="w-5 h-5 rounded"
-                        />
-                        <label className="text-xs font-bold text-slate-700">Show Border Around Names</label>
+                )}
+              </div>
+
+              {/* THEMES & COLORS */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl border-2 border-purple-200 dark:border-purple-800 overflow-hidden">
+                <button
+                  onClick={() => setSettingsSectionExpanded({...settingsSectionExpanded, themes: !settingsSectionExpanded.themes})}
+                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-purple-100/50 dark:hover:bg-purple-900/30 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <Palette className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                    <div className="text-left">
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-white">🎨 Themes & Colors</h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Personalize your scheduler appearance</p>
+                    </div>
+                  </div>
+                  <ChevronRight className={`w-5 h-5 text-slate-600 dark:text-slate-400 transition-transform ${settingsSectionExpanded.themes ? 'rotate-90' : ''}`} />
+                </button>
+                {settingsSectionExpanded.themes && (
+                  <div className="px-6 py-4 space-y-4 bg-white/50 dark:bg-slate-800/50">
+                    {/* Theme Selector */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Choose Your Theme</label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {Object.entries(APP_THEMES).map(([key, theme]) => (
+                          <button
+                            key={key}
+                            onClick={() => { setAppTheme(key as keyof typeof APP_THEMES); setStatus({type: 'success', msg: `${key.toUpperCase()} theme activated! 🎨`}); }}
+                            className={`px-4 py-6 rounded-xl font-bold transition-all border-2 ${appTheme === key ? 'border-purple-500 shadow-lg scale-105' : 'border-transparent hover:scale-105'}`}
+                            style={{background: `linear-gradient(135deg, ${key === 'blue' ? '#3b82f6' : key === 'indigo' ? '#6366f1' : key === 'purple' ? '#a855f7' : key === 'emerald' ? '#10b981' : key === 'rose' ? '#f43f5e' : '#475569'} 0%, ${key === 'blue' ? '#1d4ed8' : key === 'indigo' ? '#4f46e5' : key === 'purple' ? '#9333ea' : key === 'emerald' ? '#059669' : key === 'rose' ? '#e11d48' : '#334155'} 100%)`}}
+                          >
+                            <div className="text-white text-sm capitalize">{key}</div>
+                            {appTheme === key && <div className="text-white text-xs mt-1">✓ Active</div>}
+                          </button>
+                        ))}
                       </div>
-                      
+                    </div>
+
+                    {/* Custom Colors */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Custom Calendar Colors</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Background</label>
+                          <input type="color" value={customization.calendarBg} onChange={(e) => setCustomization({...customization, calendarBg: e.target.value})} className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300 dark:border-slate-600" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Border</label>
+                          <input type="color" value={customization.calendarBorder} onChange={(e) => setCustomization({...customization, calendarBorder: e.target.value})} className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300 dark:border-slate-600" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Text</label>
+                          <input type="color" value={customization.calendarText} onChange={(e) => setCustomization({...customization, calendarText: e.target.value})} className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300 dark:border-slate-600" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Today Highlight</label>
+                          <input type="color" value={customization.todayHighlight} onChange={(e) => setCustomization({...customization, todayHighlight: e.target.value})} className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300 dark:border-slate-600" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <button onClick={() => { setCustomization({calendarBg: '#ffffff', calendarBorder: '#e2e8f0', calendarText: '#1e293b', todayHighlight: '#a855f7', weekendBg: '#f8fafc', shiftBorderRadius: 8, shiftBorderWidth: 1, shiftShadow: 'medium', shiftPadding: 8, employeeNameBorder: true, employeeNameBorderColor: '#ffffff', employeeNameBorderWidth: 2, employeeNameBorderStyle: 'solid', employeeNameBg: 'transparent', employeeNamePadding: 4, employeeNameFontSize: 12, employeeNameFontWeight: 600, timeFontSize: 14, enableAnimations: true, enableHoverEffects: true, enableGradients: true, glassIntensity: 90, darkModeCalendarBg: '#1e293b', darkModeCalendarBorder: '#334155', darkModeCalendarText: '#f1f5f9'}); setStatus({type: 'success', msg: 'Colors reset!'}); }} className="w-full px-4 py-2 bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white rounded-xl font-semibold transition-all">Reset Colors</button>
+                  </div>
+                )}
+              </div>
+
+              {/* DISPLAY OPTIONS */}
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 overflow-hidden">
+                <button
+                  onClick={() => setSettingsSectionExpanded({...settingsSectionExpanded, display: !settingsSectionExpanded.display})}
+                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <Eye className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                    <div className="text-left">
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-white">👁️ Display Options</h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Visual preferences and animations</p>
+                    </div>
+                  </div>
+                  <ChevronRight className={`w-5 h-5 text-slate-600 dark:text-slate-400 transition-transform ${settingsSectionExpanded.display ? 'rotate-90' : ''}`} />
+                </button>
+                {settingsSectionExpanded.display && (
+                  <div className="px-6 py-4 space-y-4 bg-white/50 dark:bg-slate-800/50">
+                    <div className="space-y-3">
+                      <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">✨ Enable Animations</span>
+                        <input type="checkbox" checked={customization.enableAnimations} onChange={(e) => setCustomization({...customization, enableAnimations: e.target.checked})} className="w-5 h-5 rounded" />
+                      </label>
+                      <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">🖱️ Hover Effects</span>
+                        <input type="checkbox" checked={customization.enableHoverEffects} onChange={(e) => setCustomization({...customization, enableHoverEffects: e.target.checked})} className="w-5 h-5 rounded" />
+                      </label>
+                      <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">🌈 Gradient Backgrounds</span>
+                        <input type="checkbox" checked={customization.enableGradients} onChange={(e) => setCustomization({...customization, enableGradients: e.target.checked})} className="w-5 h-5 rounded" />
+                      </label>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{usePrivateStorage ? '🔒 Private' : '🌐 Public'} Storage Mode</label>
+                      <button onClick={() => { setUsePrivateStorage(!usePrivateStorage); setStatus({type: 'success', msg: `Switched to ${!usePrivateStorage ? 'Private' : 'Public'} mode`}); }} className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-bold transition-all shadow-md">
+                        Switch to {usePrivateStorage ? 'Public' : 'Private'} Mode
+                      </button>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">{usePrivateStorage ? 'Your schedule is private and only visible to you' : 'Your schedule is shared with your team'}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ADVANCED SETTINGS */}
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-2xl border-2 border-orange-200 dark:border-orange-800 overflow-hidden">
+                <button
+                  onClick={() => setSettingsSectionExpanded({...settingsSectionExpanded, advanced: !settingsSectionExpanded.advanced})}
+                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-orange-100/50 dark:hover:bg-orange-900/30 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <Settings className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                    <div className="text-left">
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-white">⚡ Advanced</h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Expert-level customizations</p>
+                    </div>
+                  </div>
+                  <ChevronRight className={`w-5 h-5 text-slate-600 dark:text-slate-400 transition-transform ${settingsSectionExpanded.advanced ? 'rotate-90' : ''}`} />
+                </button>
+                {settingsSectionExpanded.advanced && (
+                  <div className="px-6 py-4 space-y-4 bg-white/50 dark:bg-slate-800/50">
+                    <div>
+                      <label className="flex items-center gap-2 mb-2">
+                        <input type="checkbox" checked={customization.employeeNameBorder} onChange={(e) => setCustomization({...customization, employeeNameBorder: e.target.checked})} className="w-4 h-4" />
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Employee Name Borders</span>
+                      </label>
                       {customization.employeeNameBorder && (
-                        <>
+                        <div className="space-y-2 pl-6">
                           <div>
-                            <label className="text-xs font-bold text-slate-700 mb-1 block">Name Border Color</label>
-                            <input 
-                              type="color" 
-                              value={customization.employeeNameBorderColor}
-                              onChange={(e) => setCustomization({...customization, employeeNameBorderColor: e.target.value})}
-                              className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
-                            />
+                            <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Border Width: {customization.employeeNameBorderWidth}px</label>
+                            <input type="range" min="1" max="5" value={customization.employeeNameBorderWidth} onChange={(e) => setCustomization({...customization, employeeNameBorderWidth: parseInt(e.target.value)})} className="w-full" />
                           </div>
-                          
                           <div>
-                            <label className="text-xs font-bold text-slate-700 mb-1 block">Border Width: {customization.employeeNameBorderWidth}px</label>
-                            <input 
-                              type="range" 
-                              min="1" 
-                              max="5" 
-                              value={customization.employeeNameBorderWidth}
-                              onChange={(e) => setCustomization({...customization, employeeNameBorderWidth: parseInt(e.target.value)})}
-                              className="w-full"
-                            />
+                            <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Border Color</label>
+                            <input type="color" value={customization.employeeNameBorderColor} onChange={(e) => setCustomization({...customization, employeeNameBorderColor: e.target.value})} className="w-full h-10 rounded-lg cursor-pointer border-2 border-slate-300 dark:border-slate-600" />
                           </div>
-                          
-                          <div>
-                            <label className="text-xs font-bold text-slate-700 mb-1 block">Border Style</label>
-                            <select 
-                              value={customization.employeeNameBorderStyle}
-                              onChange={(e) => setCustomization({...customization, employeeNameBorderStyle: e.target.value})}
-                              className="w-full px-4 py-2 rounded-lg border-2 border-slate-300"
-                            >
-                              <option value="solid">Solid</option>
-                              <option value="dashed">Dashed</option>
-                              <option value="dotted">Dotted</option>
-                              <option value="double">Double</option>
-                            </select>
-                          </div>
-                        </>
+                        </div>
                       )}
-                      
-                      <div>
-                        <label className="text-xs font-bold text-slate-700 mb-1 block">Name Font Size: {customization.employeeNameFontSize}px</label>
-                        <input 
-                          type="range" 
-                          min="10" 
-                          max="20" 
-                          value={customization.employeeNameFontSize}
-                          onChange={(e) => setCustomization({...customization, employeeNameFontSize: parseInt(e.target.value)})}
-                          className="w-full"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="text-xs font-bold text-slate-700 mb-1 block">Name Font Weight: {customization.employeeNameFontWeight}</label>
-                        <input 
-                          type="range" 
-                          min="400" 
-                          max="900" 
-                          step="100"
-                          value={customization.employeeNameFontWeight}
-                          onChange={(e) => setCustomization({...customization, employeeNameFontWeight: parseInt(e.target.value)})}
-                          className="w-full"
-                        />
-                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Name Font Weight: {customization.employeeNameFontWeight}</label>
+                      <input type="range" min="400" max="900" step="100" value={customization.employeeNameFontWeight} onChange={(e) => setCustomization({...customization, employeeNameFontWeight: parseInt(e.target.value)})} className="w-full" />
+                      <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-1"><span>Light</span><span>Bold</span><span>Extra Bold</span></div>
                     </div>
                   </div>
-                  
-                  {/* Reset Button */}
-                  <button
-                    onClick={() => {
-                      setCustomization({
-                        calendarBg: '#ffffff',
-                        calendarBorder: '#e2e8f0',
-                        calendarText: '#1e293b',
-                        todayHighlight: '#a855f7',
-                        weekendBg: '#f8fafc',
-                        shiftBorderRadius: 8,
-                        shiftBorderWidth: 1,
-                        shiftShadow: 'medium',
-                        shiftPadding: 8,
-                        employeeNameBorder: true,
-                        employeeNameBorderColor: '#ffffff',
-                        employeeNameBorderWidth: 2,
-                        employeeNameBorderStyle: 'solid',
-                        employeeNameBg: 'transparent',
-                        employeeNamePadding: 4,
-                        employeeNameFontSize: 12,
-                        employeeNameFontWeight: 600,
-                        timeFontSize: 14,
-                        enableAnimations: true,
-                        enableHoverEffects: true,
-                        enableGradients: true,
-                        glassIntensity: 90,
-                        darkModeCalendarBg: '#1e293b',
-                        darkModeCalendarBorder: '#334155',
-                        darkModeCalendarText: '#f1f5f9'
-                      });
-                      setStatus({ type: 'success', msg: 'Reset to default styles' });
-                    }}
-                    className="w-full mt-4 px-6 py-3 rounded-xl font-bold bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white shadow-lg transition-all"
-                  >
-                    Reset to Defaults
-                  </button>
-                </div>
+                )}
               </div>
 
               {/* App Info */}
-              <div className="glass rounded-xl p-6">
-                <h3 className="font-bold text-slate-800 mb-3">About NoxShift</h3>
-                <div className="space-y-2 text-sm text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <img src="/noxshift-logo.png" alt="NoxShift" className="w-12 h-12 object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
-                    <div>
-                      <p className="font-bold text-slate-800">NoxShift™</p>
-                      <p className="text-xs">© {new Date().getFullYear()} - All Rights Reserved</p>
-                    </div>
-                  </div>
-                  <p className="pt-2 border-t border-slate-200">Smart Scheduling System with AI-powered insights, Guild gamification, and enterprise features.</p>
-                </div>
+              <div className="bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-6 border-2 border-slate-300 dark:border-slate-700 text-center">
+                <div className="text-4xl mb-2">🚀</div>
+                <p className="font-black text-xl text-slate-800 dark:text-white mb-1">NoxShift™</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">© {new Date().getFullYear()} - Powered by Innovation</p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">Smart Scheduling • Guild Gamification • Enterprise Features</p>
               </div>
             </div>
           </div>
