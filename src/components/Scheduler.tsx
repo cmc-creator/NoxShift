@@ -2541,6 +2541,152 @@ export default function Scheduler() {
     return 'Night Shift';
   };
 
+  // Helper function to get department-based color hue
+  const getDepartmentHue = (department: string | undefined): number | null => {
+    if (!department) return null;
+    const hueMap: Record<string, number> = {
+      'Nursing': 210,
+      'Emergency': 0,
+      'Radiology': 150,
+      'Laboratory': 30,
+      'Pharmacy': 270,
+      'Surgery': 330,
+      'ICU': 200,
+      'Pediatrics': 300,
+      'Cardiology': 15,
+      'Housekeeping': 180,
+      'Administration': 240,
+      'Security': 90,
+      'General': 200
+    };
+    return hueMap[department] || null;
+  };
+
+  // Helper function to render enhanced shift card for matrix view
+  const renderEnhancedShiftCard = (shift: Shift, index: number) => {
+    const theme = getThemeColors(shift.employeeName, shift.colorHue);
+    const isDraft = shift.isDraft;
+    const departmentHue = getDepartmentHue(shift.department);
+    const finalTheme = shift.colorHue === null && departmentHue !== null ? 
+      getThemeColors(shift.department || '', departmentHue) : theme;
+
+    return (
+      <div
+        key={shift.id}
+        draggable="true"
+        onDragStart={(e) => {
+          e.stopPropagation();
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', shift.id!);
+          e.dataTransfer.setData('shiftId', shift.id!);
+          e.dataTransfer.setData('sourceDate', shift.date);
+          (e.target as HTMLElement).style.opacity = '0.5';
+        }}
+        onDragEnd={(e) => {
+          (e.target as HTMLElement).style.opacity = '1';
+        }}
+        onClick={(e) => handleShiftClick(e, shift)}
+        className={`group relative rounded-lg p-1.5 cursor-move hover:cursor-grab active:cursor-grabbing transition-all hover:scale-[1.03] hover:shadow-xl ${
+          isDraft ? 'opacity-90 border-dashed border-2' : ''
+        }`}
+        style={{
+          backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : finalTheme.bg,
+          borderLeft: `4px solid ${finalTheme.border}`,
+          borderColor: isDraft ? finalTheme.border : undefined,
+          boxShadow: darkMode
+            ? `0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)`
+            : `0 2px 8px rgba(0, 0, 0, 0.1)`,
+          border: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)'
+        }}
+      >
+        <div className="flex items-start gap-1.5">
+          {/* Photo/Initial Circle */}
+          {employeePhotos[shift.employeeName] ? (
+            <img
+              src={employeePhotos[shift.employeeName]}
+              alt={shift.employeeName}
+              className="w-7 h-7 rounded-full object-cover border-2 shadow-sm shrink-0 ring-1 ring-white/20"
+              style={{ borderColor: finalTheme.border }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedEmployeeProfile(shift.employeeName);
+                setShowEmployeeProfile(true);
+              }}
+            />
+          ) : (
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold border-2 shadow-sm shrink-0 cursor-pointer ring-1 ring-white/20"
+              style={{ background: `linear-gradient(135deg, ${finalTheme.bg} 0%, ${finalTheme.border} 100%)`, color: finalTheme.text, borderColor: finalTheme.border }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedEmployeeProfile(shift.employeeName);
+                setShowEmployeeProfile(true);
+              }}
+            >
+              {getEmployeeInitials(shift.employeeName)}
+            </div>
+          )}
+
+          {/* Employee Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1 mb-0.5">
+              <div className="text-[10px] font-bold truncate" style={{
+                color: darkMode ? '#f1f5f9' : finalTheme.text
+              }}>
+                {shift.employeeName}
+              </div>
+              {/* Role Badge */}
+              {shift.role && (
+                <span className="text-[8px] font-bold px-1 py-0.5 rounded uppercase tracking-tight shrink-0" style={{
+                  backgroundColor: darkMode ? `${finalTheme.border}40` : `${finalTheme.border}30`,
+                  color: darkMode ? '#f1f5f9' : finalTheme.border,
+                  border: `1px solid ${finalTheme.border}60`
+                }}>
+                  {shift.role.substring(0, 3)}
+                </span>
+              )}
+            </div>
+            
+            {/* Department & Time */}
+            <div className="flex items-center gap-1 text-[9px]">
+              {shift.department && (
+                <span className="font-medium truncate px-1 rounded" style={{
+                  color: darkMode ? '#94a3b8' : finalTheme.text,
+                  backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)',
+                  opacity: 0.85
+                }}>
+                  {shift.department}
+                </span>
+              )}
+              <span className="font-bold flex items-center gap-0.5 shrink-0" style={{
+                color: darkMode ? '#10b981' : finalTheme.text,
+                opacity: 0.9
+              }}>
+                <Clock className="w-2.5 h-2.5" />
+                {formatTime(shift.startTime, timeFormat === '24h')}
+              </span>
+            </div>
+          </div>
+
+          {/* XP Badge */}
+          {employeeXP[shift.employeeName] && employeeXP[shift.employeeName].total > 0 && (
+            <div className="flex items-center gap-0.5 bg-gradient-to-r from-yellow-400 to-amber-500 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold text-black shadow-sm">
+              <Star className="w-2.5 h-2.5" />
+              {employeeXP[shift.employeeName].total}
+            </div>
+          )}
+        </div>
+        
+        {/* Hover Tooltip */}
+        <div className="absolute left-0 -top-1 translate-y-[-100%] hidden group-hover:block z-50 pointer-events-none">
+          <div className="bg-slate-900 text-white text-[10px] px-2 py-1 rounded shadow-xl whitespace-nowrap border border-slate-700">
+            {shift.employeeName} • {formatTime(shift.startTime, timeFormat === '24h')} - {formatTime(shift.endTime, timeFormat === '24h')}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Shift Matrix View Renderer - Grid layout by shift period and day
   const renderShiftMatrixView = () => {
     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
@@ -2701,95 +2847,9 @@ export default function Scheduler() {
                     </div>
                   )}
 
-                  {/* Shift Cards - Compact */}
+                  {/* Shift Cards - Enhanced Compact Design */}
                   <div className="space-y-1">
-                    {dayShifts.map((shift, index) => {
-                      const theme = getThemeColors(shift.employeeName, shift.colorHue);
-                      const isDraft = shift.isDraft;
-
-                      return (
-                        <div
-                          key={shift.id}
-                          draggable="true"
-                          onDragStart={(e) => {
-                            e.stopPropagation();
-                            e.dataTransfer.effectAllowed = 'move';
-                            e.dataTransfer.setData('text/plain', shift.id!);
-                            e.dataTransfer.setData('shiftId', shift.id!);
-                            e.dataTransfer.setData('sourceDate', shift.date);
-                            (e.target as HTMLElement).style.opacity = '0.5';
-                          }}
-                          onDragEnd={(e) => {
-                            (e.target as HTMLElement).style.opacity = '1';
-                          }}
-                          onClick={(e) => handleShiftClick(e, shift)}
-                          className={`rounded-lg p-1.5 cursor-move hover:cursor-grab active:cursor-grabbing transition-all hover:scale-[1.02] ${
-                            isDraft ? 'opacity-90 border-dashed border' : ''
-                          }`}
-                          style={{
-                            backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : theme.bg,
-                            borderLeft: darkMode ? `3px solid ${theme.border}` : 'none',
-                            borderColor: isDraft ? theme.bg : 'transparent',
-                            boxShadow: darkMode
-                              ? '0 2px 4px rgba(0, 0, 0, 0.3)'
-                              : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                            border: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)'
-                          }}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            {/* Photo/Initial Circle */}
-                            {employeePhotos[shift.employeeName] ? (
-                              <img
-                                src={employeePhotos[shift.employeeName]}
-                                alt={shift.employeeName}
-                                className="w-6 h-6 rounded-md object-cover border border-white/20 shadow-sm shrink-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedEmployeeProfile(shift.employeeName);
-                                  setShowEmployeeProfile(true);
-                                }}
-                              />
-                            ) : (
-                              <div
-                                className="w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold border border-white/20 shadow-sm shrink-0 cursor-pointer"
-                                style={{ background: `linear-gradient(135deg, ${theme.bg} 0%, ${theme.border} 100%)`, color: theme.text }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedEmployeeProfile(shift.employeeName);
-                                  setShowEmployeeProfile(true);
-                                }}
-                              >
-                                {getEmployeeInitials(shift.employeeName)}
-                              </div>
-                            )}
-
-                            {/* Employee Name & Time */}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[10px] font-bold truncate" style={{
-                                color: darkMode ? '#f1f5f9' : theme.text
-                              }}>
-                                {shift.employeeName}
-                              </div>
-                              <div className="text-[9px] font-medium truncate flex items-center gap-0.5" style={{
-                                color: darkMode ? '#10b981' : theme.text,
-                                opacity: 0.8
-                              }}>
-                                <Clock className="w-2.5 h-2.5 inline" />
-                                {formatTime(shift.startTime, timeFormat === '24h')}
-                              </div>
-                            </div>
-
-                            {/* XP Badge */}
-                            {employeeXP[shift.employeeName] && employeeXP[shift.employeeName].total > 0 && (
-                              <div className="flex items-center gap-0.5 bg-gradient-to-r from-yellow-400 to-amber-500 px-1 py-0.5 rounded text-[8px] font-extrabold text-black">
-                                <Star className="w-2 h-2" />
-                                {employeeXP[shift.employeeName].total}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {dayShifts.map((shift, index) => renderEnhancedShiftCard(shift, index))}
                   </div>
                 </div>
               );
@@ -2847,6 +2907,27 @@ export default function Scheduler() {
                     <div
                       key={`week2-${shiftPeriod.period}-${dayInfo.day}`}
                       onClick={() => handleDayClick(dayInfo.day!)}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.dataTransfer.dropEffect = 'move';
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const shiftId = e.dataTransfer.getData('shiftId');
+                        const sourceDate = e.dataTransfer.getData('sourceDate');
+                        if (shiftId && sourceDate !== dateStr) {
+                          const shiftRef = doc(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`, shiftId);
+                          updateDoc(shiftRef, { date: dateStr }).then(() => {
+                            setStatus({ type: 'success', msg: '✓ Shift moved successfully!' });
+                            setTimeout(() => setStatus({ type: '', msg: '' }), 2000);
+                          }).catch((err) => {
+                            console.error('Drag drop error:', err);
+                            setStatus({ type: 'error', msg: 'Failed to move shift' });
+                          });
+                        }
+                      }}
                       className={`border-r p-2 transition-all cursor-pointer hover:shadow-lg ${
                         isToday ? 'ring-2 ring-purple-400/50' : ''
                       }`}
@@ -2874,41 +2955,7 @@ export default function Scheduler() {
                       )}
 
                       <div className="space-y-1">
-                        {dayShifts.map((shift) => {
-                          const theme = getThemeColors(shift.employeeName, shift.colorHue);
-                          return (
-                            <div
-                              key={shift.id}
-                              onClick={(e) => handleShiftClick(e, shift)}
-                              className="rounded-lg p-1.5 cursor-pointer transition-all hover:scale-[1.02]"
-                              style={{
-                                backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : theme.bg,
-                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-                              }}
-                            >
-                              <div className="flex items-center gap-1.5">
-                                <div
-                                  className="w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold"
-                                  style={{ background: theme.bg, color: theme.text }}
-                                >
-                                  {getEmployeeInitials(shift.employeeName)}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-[10px] font-bold truncate" style={{
-                                    color: darkMode ? '#f1f5f9' : theme.text
-                                  }}>
-                                    {shift.employeeName}
-                                  </div>
-                                  <div className="text-[9px] truncate" style={{
-                                    color: darkMode ? '#10b981' : theme.text
-                                  }}>
-                                    {formatTime(shift.startTime, timeFormat === '24h')}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {dayShifts.map((shift, index) => renderEnhancedShiftCard(shift, index))}
                       </div>
                     </div>
                   );
@@ -2965,6 +3012,27 @@ export default function Scheduler() {
                       <div
                         key={`week${weekIndex + 3}-${shiftPeriod.period}-${dayInfo.day}`}
                         onClick={() => handleDayClick(dayInfo.day!)}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          e.dataTransfer.dropEffect = 'move';
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const shiftId = e.dataTransfer.getData('shiftId');
+                          const sourceDate = e.dataTransfer.getData('sourceDate');
+                          if (shiftId && sourceDate !== dateStr) {
+                            const shiftRef = doc(db, `artifacts/${appId}/${usePrivateStorage ? 'users/' + user.uid : 'public/data'}/shifts`, shiftId);
+                            updateDoc(shiftRef, { date: dateStr }).then(() => {
+                              setStatus({ type: 'success', msg: '✓ Shift moved successfully!' });
+                              setTimeout(() => setStatus({ type: '', msg: '' }), 2000);
+                            }).catch((err) => {
+                              console.error('Drag drop error:', err);
+                              setStatus({ type: 'error', msg: 'Failed to move shift' });
+                            });
+                          }
+                        }}
                         className={`border-r p-2 transition-all cursor-pointer ${
                           isToday ? 'ring-2 ring-purple-400/50' : ''
                         }`}
@@ -2988,26 +3056,7 @@ export default function Scheduler() {
                         )}
 
                         <div className="space-y-1">
-                          {dayShifts.map((shift) => {
-                            const theme = getThemeColors(shift.employeeName, shift.colorHue);
-                            return (
-                              <div
-                                key={shift.id}
-                                onClick={(e) => handleShiftClick(e, shift)}
-                                className="rounded-lg p-1.5 cursor-pointer"
-                                style={{
-                                  backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : theme.bg,
-                                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-                                }}
-                              >
-                                <div className="text-[10px] font-bold truncate" style={{
-                                  color: darkMode ? '#f1f5f9' : theme.text
-                                }}>
-                                  {shift.employeeName}
-                                </div>
-                              </div>
-                            );
-                          })}
+                          {dayShifts.map((shift, index) => renderEnhancedShiftCard(shift, index))}
                         </div>
                       </div>
                     );
