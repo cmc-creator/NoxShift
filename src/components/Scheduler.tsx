@@ -3222,20 +3222,6 @@ export default function Scheduler() {
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
             </div>
-            
-            {/* Display Style Selector */}
-            <div className="nox-tracer px-4 py-2 relative print:hidden" style={{'--tracer-color': '#6366f1'} as React.CSSProperties}>
-              <select 
-                value={calendarDisplayStyle} 
-                onChange={(e) => setCalendarDisplayStyle(e.target.value as 'standard' | 'compact' | 'list' | 'timeline')}
-                className="bg-transparent text-white font-bold px-2 py-1 cursor-pointer appearance-none pr-8 outline-none">
-                <option value="standard" className="bg-slate-900">Standard</option>
-                <option value="compact" className="bg-slate-900">Compact</option>
-                <option value="list" className="bg-slate-900">List</option>
-                <option value="timeline" className="bg-slate-900">Timeline</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
-            </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -3278,11 +3264,7 @@ export default function Scheduler() {
             </button>
             
             <button onClick={() => setShowOracle(true)} className="nox-tracer p-3 print:hidden" title="Oracle AI" style={{'--tracer-color': '#8b5cf6'} as React.CSSProperties}>
-              <BrainCircuit className="w-5 h-5 text-white" />
-            </button>
-            
-            <button onClick={() => setShowSettings(true)} className="nox-tracer p-3 print:hidden" title="Settings" style={{'--tracer-color': '#ec4899'} as React.CSSProperties}>
-              <Settings className="w-5 h-5 text-white" />
+              <Sparkles className="w-5 h-5 text-white" />
             </button>
             
             <button onClick={() => signOut()} className="nox-tracer p-3 print:hidden" title="Sign Out" style={{'--tracer-color': '#ef4444'} as React.CSSProperties}>
