@@ -148,6 +148,7 @@ import { ManagerNotes } from '../features/notes/ManagerNotes';
 import { ShiftReportTemplates } from '../features/templates/ShiftReportTemplates';
 import { EmployeeManagement } from '../features/management/EmployeeManagement';
 import { EmployeeOnboarding } from '../features/onboarding/EmployeeOnboarding';
+import { EmployeeBasecamp } from '../features/basecamp/EmployeeBasecamp';
 
 // --- Firebase Configuration ---
 const db = getFirestore(app);
@@ -428,6 +429,7 @@ export default function Scheduler() {
   const [showConflictDetector, setShowConflictDetector] = useState(false);
   const [showCostForecast, setShowCostForecast] = useState(false);
   const [showMarketplace, setShowMarketplace] = useState(false);
+  const [showEmployeeBasecamp, setShowEmployeeBasecamp] = useState(false);
   const [showBulkOps, setShowBulkOps] = useState(false);
   const [showCompareView, setShowCompareView] = useState(false);
   const [showOracleAI, setShowOracleAI] = useState(false);
@@ -3418,16 +3420,20 @@ export default function Scheduler() {
                     {/* Employee Management */}
                     <div className="mb-2">
                       <div className="px-3 py-1 text-xs font-bold uppercase" style={{color: darkMode ? '#94a3b8' : '#64748b'}}>Employee Tools</div>
-                      <a href="/basecamp" className="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-all block hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 hover:text-white" style={{
+                      <button
+                        onClick={() => {
+                          setShowEmployeeBasecamp(true);
+                          setShowMenu(false);
+                        }}
+                        className="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-all hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 hover:text-white" style={{
                         background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
-                        textDecoration: 'none',
                         color: darkMode ? '#e879f9' : '#a855f7'
                       }}>
                         <Rocket className="w-5 h-5" />
                         <div className="flex-1">
                           <div className="font-semibold text-sm flex items-center gap-2">
                             Basecamp Portal
-                            <span className="text-[9px] bg-gradient-to-r from-purple-600 to-pink-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                            <span className="text-[9px] bg-gradient-to-r from-purple-600 to-pink-600 text-white px-1.5 py-0.5 rounded-full font-bold">HOT</span>
                           </div>
                           <div className="text-xs opacity-75">Social hub, games & more</div>
                         </div>
@@ -8663,6 +8669,14 @@ export default function Scheduler() {
             setStatus({type: 'success', msg: '🎉 Welcome onboarding complete!'});
           }}
           onSkip={() => setShowEmployeeOnboarding(false)}
+        />
+      )}
+
+      {/* Employee Basecamp */}
+      {showEmployeeBasecamp && (
+        <EmployeeBasecamp
+          currentUser={employees[0]?.name || 'Employee'}
+          onClose={() => setShowEmployeeBasecamp(false)}
         />
       )}
 
