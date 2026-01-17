@@ -145,6 +145,9 @@ import { SchedulePublisher } from '../features/publishing/SchedulePublisher';
 import { BudgetAlerts } from '../features/budget/BudgetAlerts';
 import { QuickFillAI } from '../features/quickfill/QuickFillAI';
 import { ManagerNotes } from '../features/notes/ManagerNotes';
+import { ShiftReportTemplates } from '../features/templates/ShiftReportTemplates';
+import { EmployeeManagement } from '../features/management/EmployeeManagement';
+import { EmployeeOnboarding } from '../features/onboarding/EmployeeOnboarding';
 
 // --- Firebase Configuration ---
 const db = getFirestore(app);
@@ -434,6 +437,9 @@ export default function Scheduler() {
   const [showBudgetAlerts, setShowBudgetAlerts] = useState(false);
   const [showQuickFillAI, setShowQuickFillAI] = useState(false);
   const [showManagerNotes, setShowManagerNotes] = useState(false);
+  const [showReportTemplates, setShowReportTemplates] = useState(false);
+  const [showEmployeeManagement, setShowEmployeeManagement] = useState(false);
+  const [showEmployeeOnboarding, setShowEmployeeOnboarding] = useState(false);
   const [showPTODonations, setShowPTODonations] = useState(false);
   const [compareMonth, setCompareMonth] = useState<Date>(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const [notifications, setNotifications] = useState<Array<{id: string; type: string; message: string; timestamp: number; read: boolean}>>([]);
@@ -3487,6 +3493,26 @@ export default function Scheduler() {
                             <span className="text-[9px] bg-amber-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
                           </div>
                           <div className="text-xs text-slate-500">Shift logs & handoff</div>
+                        </div>
+                      </button>
+                      <button onClick={() => { setShowReportTemplates(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <FileText className="w-5 h-5 text-indigo-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            Report Templates
+                            <span className="text-[9px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                          </div>
+                          <div className="text-xs text-slate-500">Custom shift reports</div>
+                        </div>
+                      </button>
+                      <button onClick={() => { setShowEmployeeManagement(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <UserCheck className="w-5 h-5 text-cyan-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            Employee Management
+                            <span className="text-[9px] bg-cyan-600 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                          </div>
+                          <div className="text-xs text-slate-500">Add users & assign logins</div>
                         </div>
                       </button>
                       <button onClick={() => { setShowMarketplace(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
@@ -8593,6 +8619,50 @@ export default function Scheduler() {
           onSaveNote={(note) => {
             setStatus({type: 'success', msg: `📝 Note saved: ${note.title}`});
           }}
+        />
+      )}
+
+      {/* Shift Report Templates */}
+      {showReportTemplates && (
+        <ShiftReportTemplates
+          onClose={() => setShowReportTemplates(false)}
+          currentUser={employees[0]?.name || 'Manager'}
+          onSaveTemplate={(template) => {
+            setStatus({type: 'success', msg: `📄 Template "${template.name}" created!`});
+          }}
+          onUseTemplate={(templateId) => {
+            setStatus({type: 'success', msg: '📝 Template loaded! Fill out your shift report.'});
+          }}
+        />
+      )}
+
+      {/* Employee Management */}
+      {showEmployeeManagement && (
+        <EmployeeManagement
+          onClose={() => setShowEmployeeManagement(false)}
+          currentUser={employees[0]?.name || 'Manager'}
+          onAddEmployee={(employee) => {
+            setStatus({type: 'success', msg: `✅ ${employee.name} added successfully!`});
+          }}
+          onUpdateEmployee={(employee) => {
+            setStatus({type: 'success', msg: `✅ ${employee.name} updated!`});
+          }}
+        />
+      )}
+
+      {/* Employee Onboarding */}
+      {showEmployeeOnboarding && (
+        <EmployeeOnboarding
+          employeeName="New Employee"
+          employeeEmail="employee@company.com"
+          companyName="Your Company"
+          managerName={employees[0]?.name || 'Manager'}
+          startDate={new Date().toISOString()}
+          onComplete={() => {
+            setShowEmployeeOnboarding(false);
+            setStatus({type: 'success', msg: '🎉 Welcome onboarding complete!'});
+          }}
+          onSkip={() => setShowEmployeeOnboarding(false)}
         />
       )}
 
