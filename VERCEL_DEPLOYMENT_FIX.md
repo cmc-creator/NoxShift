@@ -73,7 +73,7 @@ npm run build
 ### Expected Vercel Behavior
 After pushing this fix, Vercel should:
 1. Move deployments from "queued" to "building" state
-2. Execute `npm install` to install dependencies  
+2. Execute `npm install` to install dependencies
 3. Execute `npm run build` to build the project
 4. Deploy the contents of the `dist/` directory
 5. Serve the application with SPA routing working correctly
