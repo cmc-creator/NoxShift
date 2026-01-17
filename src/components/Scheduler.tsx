@@ -2455,8 +2455,32 @@ export default function Scheduler() {
       weekDays.push(day);
     }
 
+    const goToPrevWeek = () => {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() - 7);
+      setCurrentDate(newDate);
+    };
+
+    const goToNextWeek = () => {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() + 7);
+      setCurrentDate(newDate);
+    };
+
     return (
       <div className="glass rounded-3xl overflow-hidden">
+        {/* Week Navigation */}
+        <div className="flex items-center justify-between px-6 py-3 border-b border-white/20 bg-gradient-to-r from-purple-600 to-pink-600">
+          <button onClick={goToPrevWeek} className="p-2 hover:bg-white/20 rounded-lg transition-all">
+            <ChevronLeft className="w-5 h-5 text-white" />
+          </button>
+          <span className="text-white font-bold text-lg">
+            Week of {MONTH_NAMES[weekDays[0].getMonth()]} {weekDays[0].getDate()} - {weekDays[6].getDate()}, {weekDays[0].getFullYear()}
+          </span>
+          <button onClick={goToNextWeek} className="p-2 hover:bg-white/20 rounded-lg transition-all">
+            <ChevronRight className="w-5 h-5 text-white" />
+          </button>
+        </div>
         <div className="grid grid-cols-7 border-b border-white/20 bg-gradient-to-r from-purple-50/50 to-pink-50/50">
           {weekDays.map((day, i) => (
             <div key={i} className="py-4 text-center border-r border-white/20 last:border-r-0">
@@ -2640,28 +2664,28 @@ export default function Scheduler() {
           (e.target as HTMLElement).style.opacity = '1';
         }}
         onClick={(e) => handleShiftClick(e, shift)}
-        className={`group relative rounded-lg p-1.5 cursor-move hover:cursor-grab active:cursor-grabbing transition-all hover:scale-[1.03] hover:shadow-xl ${
+        className={`group relative rounded-md p-1 cursor-move hover:cursor-grab active:cursor-grabbing transition-all hover:scale-[1.02] hover:shadow-lg ${
           isDraft ? 'opacity-90' : ''
         }`}
         style={{
           backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : finalTheme.bg,
-          borderLeft: `4px solid ${finalTheme.border}`,
+          borderLeft: `3px solid ${finalTheme.border}`,
           borderRight: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
           borderTop: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
           borderBottom: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
           borderStyle: isDraft ? 'dashed' : 'solid',
           boxShadow: darkMode
-            ? `0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)`
-            : `0 2px 8px rgba(0, 0, 0, 0.1)`
+            ? `0 1px 4px rgba(0, 0, 0, 0.3)`
+            : `0 1px 4px rgba(0, 0, 0, 0.1)`
         }}
       >
-        <div className="flex items-start gap-1.5">
-          {/* Photo/Initial Circle */}
+        <div className="flex items-start gap-1">
+          {/* Photo/Initial Circle - Smaller */}
           {employeePhotos[shift.employeeName] ? (
             <img
               src={employeePhotos[shift.employeeName]}
               alt={shift.employeeName}
-              className="w-7 h-7 rounded-full object-cover border-2 shadow-sm shrink-0 ring-1 ring-white/20"
+              className="w-5 h-5 rounded-full object-cover border shadow-sm shrink-0"
               style={{ borderColor: finalTheme.border }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -2671,7 +2695,7 @@ export default function Scheduler() {
             />
           ) : (
             <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold border-2 shadow-sm shrink-0 cursor-pointer ring-1 ring-white/20"
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold border shadow-sm shrink-0 cursor-pointer"
               style={{ background: `linear-gradient(135deg, ${finalTheme.bg} 0%, ${finalTheme.border} 100%)`, color: finalTheme.text, borderColor: finalTheme.border }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -2683,18 +2707,19 @@ export default function Scheduler() {
             </div>
           )}
 
-          {/* Employee Info */}
+          {/* Employee Info - Compact */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1 mb-0.5">
-              <div className="font-bold truncate" style={{
-                color: darkMode ? '#f1f5f9' : finalTheme.text,
-                fontSize: `${employeeBadgeSize}px`
+            <div className="flex items-center gap-0.5 mb-0">
+              <div className="font-extrabold truncate leading-tight" style={{
+                color: darkMode ? '#ffffff' : finalTheme.text,
+                fontSize: `${Math.max(employeeBadgeSize - 1, 11)}px`,
+                textShadow: darkMode ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'
               }}>
                 {shift.employeeName}
               </div>
-              {/* Role Badge */}
+              {/* Role Badge - Smaller */}
               {shift.role && (
-                <span className="text-[8px] font-bold px-1 py-0.5 rounded uppercase tracking-tight shrink-0" style={{
+                <span className="text-[7px] font-bold px-0.5 py-0 rounded uppercase tracking-tight shrink-0" style={{
                   backgroundColor: darkMode ? `${finalTheme.border}40` : `${finalTheme.border}30`,
                   color: darkMode ? '#f1f5f9' : finalTheme.border,
                   border: `1px solid ${finalTheme.border}60`
@@ -2704,18 +2729,9 @@ export default function Scheduler() {
               )}
             </div>
             
-            {/* Department & Time */}
-            <div className="flex items-center gap-1 text-[9px]">
-              {shift.department && (
-                <span className="font-medium truncate px-1 rounded" style={{
-                  color: darkMode ? '#94a3b8' : finalTheme.text,
-                  backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)',
-                  opacity: 0.85
-                }}>
-                  {shift.department}
-                </span>
-              )}
-              <span className="font-bold flex items-center gap-0.5 shrink-0" style={{
+            {/* Time - Compact */}
+            <div className="flex items-center gap-0.5 text-[8px] leading-tight">
+              <span className="font-bold" style={{
                 color: darkMode ? '#10b981' : finalTheme.text,
                 opacity: 0.9
               }}>
@@ -2779,18 +2795,18 @@ export default function Scheduler() {
       }}>
         {/* Header Row - Days of Week */}
         <div className="grid border-b" style={{
-          gridTemplateColumns: '160px repeat(7, 1fr)',
+          gridTemplateColumns: '120px repeat(7, 1fr)',
           borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(148, 163, 184, 0.2)',
           background: darkMode ? 'linear-gradient(135deg, rgba(88, 28, 135, 0.3), rgba(79, 70, 229, 0.3))' : 'linear-gradient(135deg, rgba(243, 232, 255, 0.5), rgba(252, 231, 243, 0.5))'
         }}>
-          <div className="py-3 px-4 text-xs font-bold uppercase tracking-widest text-center border-r" style={{
+          <div className="py-1.5 px-2 text-[10px] font-bold uppercase tracking-wide text-center border-r" style={{
             color: darkMode ? 'rgba(255, 255, 255, 0.9)' : '#475569',
             borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(148, 163, 184, 0.2)'
           }}>
-            Shift Period
+            Shift
           </div>
           {DAYS.map(day => (
-            <div key={day} className="py-3 text-center text-xs font-bold uppercase tracking-widest" style={{
+            <div key={day} className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide" style={{
               color: darkMode ? 'rgba(255, 255, 255, 0.9)' : '#475569'
             }}>
               {day}
@@ -2801,20 +2817,20 @@ export default function Scheduler() {
         {/* Matrix Grid - Each Row is a Shift Period */}
         {shiftPeriods.map((shiftPeriod) => (
           <div key={shiftPeriod.period} className="grid border-b" style={{
-            gridTemplateColumns: '160px repeat(7, 1fr)',
+            gridTemplateColumns: '120px repeat(7, 1fr)',
             borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(148, 163, 184, 0.2)'
           }}>
             {/* Shift Period Label Column */}
-            <div className="py-3 px-4 border-r flex flex-col justify-center" style={{
+            <div className="py-1 px-2 border-r flex flex-col justify-center" style={{
               backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.5)' : 'rgba(255, 255, 255, 0.3)',
               borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(148, 163, 184, 0.2)'
             }}>
-              <div className="font-bold text-sm" style={{
+              <div className="font-bold text-[11px]" style={{
                 color: darkMode ? '#f1f5f9' : '#1e293b'
               }}>
                 {shiftPeriod.label}
               </div>
-              <div className="text-xs" style={{
+              <div className="text-[9px]" style={{
                 color: darkMode ? '#94a3b8' : '#64748b'
               }}>
                 {shiftPeriod.timeRange}
@@ -2825,7 +2841,7 @@ export default function Scheduler() {
             {calendarDays.slice(0, 7).map((dayInfo, colIndex) => {
               if (!dayInfo.dateObj || !dayInfo.day) {
                 return (
-                  <div key={`empty-${shiftPeriod.period}-${colIndex}`} className="border-r p-2" style={{
+                  <div key={`empty-${shiftPeriod.period}-${colIndex}`} className="border-r p-0.5" style={{
                     backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.3)' : 'rgba(255, 255, 255, 0.2)',
                     borderColor: darkMode ? 'rgba(45, 45, 68, 0.5)' : 'rgba(255, 255, 255, 0.2)'
                   }} />
@@ -2868,8 +2884,8 @@ export default function Scheduler() {
                       });
                     }
                   }}
-                  className={`border-r p-2 transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-[1.01] ${
-                    isToday ? 'ring-2 ring-purple-400/50' : ''
+                  className={`border-r p-0.5 transition-all duration-200 cursor-pointer hover:bg-opacity-80 ${
+                    isToday ? 'ring-1 ring-purple-400/50' : ''
                   }`}
                   style={{
                     backgroundColor: isToday 
@@ -2884,8 +2900,8 @@ export default function Scheduler() {
                 >
                   {/* Day Number Badge - Only show in first row */}
                   {shiftPeriod.period === 'Day Shift' && (
-                    <div className="flex justify-between items-start mb-1">
-                      <span className={`text-xs font-bold w-5 h-5 flex items-center justify-center rounded-lg ${
+                    <div className="flex justify-between items-start mb-0.5">
+                      <span className={`text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded ${
                         isToday 
                           ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white' 
                           : holiday
@@ -2897,15 +2913,15 @@ export default function Scheduler() {
                         {dayInfo.day}
                       </span>
                       {holiday && (
-                        <div className="text-[8px] font-bold text-yellow-600" title={holiday.name}>
+                        <div className="text-[7px] font-bold text-yellow-600" title={holiday.name}>
                           {holiday.type === 'federal' ? '🎊' : '🎉'}
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Shift Cards - Enhanced Compact Design */}
-                  <div className="space-y-1">
+                  {/* Shift Cards - Ultra Compact Design */}
+                  <div className="space-y-0.5">
                     {dayShifts.map((shift, index) => renderEnhancedShiftCard(shift, index))}
                   </div>
                 </div>
@@ -2920,19 +2936,19 @@ export default function Scheduler() {
             {/* Week 2 */}
             {calendarDays.slice(7, 14).length > 0 && shiftPeriods.map((shiftPeriod) => (
               <div key={`week2-${shiftPeriod.period}`} className="grid border-b" style={{
-                gridTemplateColumns: '160px repeat(7, 1fr)',
+                gridTemplateColumns: '120px repeat(7, 1fr)',
                 borderColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(148, 163, 184, 0.2)'
               }}>
-                <div className="py-3 px-4 border-r flex flex-col justify-center" style={{
+                <div className="py-1 px-2 border-r flex flex-col justify-center" style={{
                   backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.5)' : 'rgba(255, 255, 255, 0.3)',
                   borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(148, 163, 184, 0.2)'
                 }}>
-                  <div className="font-bold text-sm" style={{
+                  <div className="font-bold text-[11px]" style={{
                     color: darkMode ? '#f1f5f9' : '#1e293b'
                   }}>
                     {shiftPeriod.label}
                   </div>
-                  <div className="text-xs" style={{
+                  <div className="text-[9px]" style={{
                     color: darkMode ? '#94a3b8' : '#64748b'
                   }}>
                     {shiftPeriod.timeRange}
@@ -2942,7 +2958,7 @@ export default function Scheduler() {
                 {calendarDays.slice(7, 14).map((dayInfo, colIndex) => {
                   if (!dayInfo.dateObj || !dayInfo.day) {
                     return (
-                      <div key={`empty-week2-${shiftPeriod.period}-${colIndex}`} className="border-r p-2" style={{
+                      <div key={`empty-week2-${shiftPeriod.period}-${colIndex}`} className="border-r p-0.5" style={{
                         backgroundColor: darkMode ? 'rgba(26, 26, 46, 0.3)' : 'rgba(255, 255, 255, 0.2)',
                         borderColor: darkMode ? 'rgba(45, 45, 68, 0.5)' : 'rgba(255, 255, 255, 0.2)'
                       }} />
