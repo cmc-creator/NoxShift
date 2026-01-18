@@ -8,6 +8,24 @@ This guide will walk you through setting up NoxShift on a new computer from scra
 > - **[PLATFORM_SETUP.md](PLATFORM_SETUP.md)** - OS-specific details complementing this guide
 > - **[SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)** - Quick checklist format of these steps
 
+---
+
+## 🚨 Having Issues? Quick Diagnosis
+
+If something's not working, try these first:
+
+1. **Dependencies not installed?** → Run `npm install`
+2. **Missing .env file?** → Run `cp .env.example .env`
+3. **Database errors?** → Run `npx prisma generate` then `npx prisma db push`
+4. **"Command not found" errors?** → Install Node.js and Git (see Prerequisites below)
+5. **Port already in use?** → Kill the process or change PORT in `.env`
+
+**Still stuck?** Run `node verify-setup.cjs` to automatically check your setup.
+
+**See detailed solutions:** Jump to [Common Issues & Solutions](#common-issues--solutions) section.
+
+---
+
 ## Prerequisites
 
 Before you begin, make sure you have the following installed:
@@ -145,6 +163,34 @@ npx prisma studio
 ```
 
 Opens at http://localhost:5555 - useful for inspecting data!
+
+---
+
+## Step 4.5: Verify Setup (Recommended)
+
+Before starting the servers, run this verification script to check if everything is configured correctly:
+
+```bash
+node verify-setup.cjs
+```
+
+**Expected Output:**
+```
+✅ Perfect! Everything is set up correctly.
+
+🚀 Next steps:
+   1. Terminal 1: npm run server
+   2. Terminal 2: npm run dev
+   3. Open http://localhost:5173
+```
+
+If you see any errors, the script will tell you what's missing and how to fix it.
+
+**Common Issues Caught by Verification:**
+- Missing `.env` file
+- Dependencies not installed (`npm install` needed)
+- Prisma client not generated
+- Database not initialized
 
 ---
 
@@ -301,6 +347,149 @@ NoxShift/
 ├── package.json             # Dependencies
 ├── vite.config.ts           # Vite configuration
 └── README.md                # Project documentation
+```
+
+---
+
+## Common Issues & Solutions
+
+### Issue 1: "npm: command not found"
+
+**Problem:** Node.js or npm is not installed or not in PATH.
+
+**Solution:**
+1. Install Node.js from https://nodejs.org/
+2. After installation, **restart your terminal**
+3. Verify: `node --version` and `npm --version`
+4. If still not working on Windows, add Node.js to PATH manually:
+   - Search "Environment Variables" in Windows
+   - Edit PATH and add `C:\Program Files\nodejs`
+
+### Issue 2: "git: command not found"
+
+**Problem:** Git is not installed or not in PATH.
+
+**Solution:**
+1. Install Git from https://git-scm.com/downloads
+2. During installation, choose "Git from the command line and 3rd-party software"
+3. **Restart your terminal**
+4. Verify: `git --version`
+
+### Issue 3: npm install fails with EACCES errors
+
+**Problem:** Permission errors during npm install.
+
+**Solution (macOS/Linux):**
+```bash
+# Change npm's default directory
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**Solution (Windows):**
+Run PowerShell or Command Prompt as Administrator, then run `npm install`.
+
+### Issue 4: Prisma generate fails
+
+**Problem:** `Error: @prisma/client did not initialize yet`
+
+**Solution:**
+```bash
+# Delete and reinstall Prisma
+npm uninstall @prisma/client prisma
+npm install @prisma/client prisma
+npx prisma generate
+```
+
+### Issue 5: Server starts but shows "Cannot find module"
+
+**Problem:** Missing or corrupted dependencies.
+
+**Solution:**
+```bash
+# Clean install
+rm -rf node_modules package-lock.json
+npm install
+npx prisma generate
+```
+
+### Issue 6: "Error: JWT_SECRET is not defined"
+
+**Problem:** The `.env` file doesn't exist or is missing JWT_SECRET.
+
+**Solution:**
+```bash
+# Make sure .env file exists
+ls -la .env
+
+# If it doesn't exist, copy from example
+cp .env.example .env
+
+# Edit .env and add JWT_SECRET
+# Generate a secure secret:
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# Add to .env:
+# JWT_SECRET="<generated-secret-here>"
+```
+
+### Issue 7: Frontend shows blank page or errors
+
+**Problem:** API URL not configured or backend not running.
+
+**Solution:**
+1. Make sure backend is running in Terminal 1: `npm run server`
+2. Check backend health: Open http://localhost:5000/api/health
+3. Verify `.env` has: `VITE_API_URL=http://localhost:5000/api`
+4. Restart frontend: Stop (`Ctrl+C`) and run `npm run dev` again
+
+### Issue 8: Database errors (SQLite locked, can't write)
+
+**Problem:** Database file is locked or permissions issue.
+
+**Solution:**
+```bash
+# Delete and recreate database
+rm dev.db
+npx prisma db push
+```
+
+### Issue 9: Port 3000/5000/5173 already in use
+
+**Problem:** Another application is using the port.
+
+**Solution:**
+
+**Windows:**
+```bash
+# Find what's using the port
+netstat -ano | findstr :5000
+# Kill the process (replace PID with actual number)
+taskkill /PID <PID> /F
+```
+
+**macOS/Linux:**
+```bash
+# Find and kill process on port
+lsof -ti:5000 | xargs kill -9
+```
+
+**Alternative:** Change the port in `.env`:
+```env
+PORT=5001
+```
+
+### Issue 10: "Module not found: Can't resolve 'firebase'"
+
+**Problem:** Firebase dependencies not installed (Firebase is optional).
+
+**Solution:**
+```bash
+# Firebase is optional - the app works without it
+# If you need Firebase features, install:
+npm install firebase
 ```
 
 ---
