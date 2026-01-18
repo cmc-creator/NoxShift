@@ -83,6 +83,7 @@ import {
   Headphones,
   MessageCircle,
   Video,
+  Volume2,
   Flame,
   Crown,
   Gem,
@@ -8563,6 +8564,112 @@ export default function Scheduler() {
                     <div className="text-3xl font-black text-amber-700">{Object.keys(employeeXP).length}</div>
                     <div className="text-xs font-bold text-amber-600">XP Tracked</div>
                   </div>
+                </div>
+              </div>
+
+              {/* 🎮 Custom XP Adjustment */}
+              <div className="glass rounded-2xl p-6 md:col-span-2">
+                <h3 className="font-bold text-xl mb-4 flex items-center gap-2 text-slate-800">
+                  🎮 Custom XP Adjustment
+                </h3>
+                <p className="text-sm text-slate-600 mb-4">Award custom XP amounts for any reason! Great for daily tasks, special achievements, or corrections.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {employees.map(emp => (
+                    <div key={emp.name} className="bg-gradient-to-br from-slate-50 to-white border-2 border-slate-200 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <div className="font-bold text-slate-800">{emp.name}</div>
+                          <div className="text-xs text-slate-500">Current: {employeeXP[emp.name]?.total || 0} XP</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mb-2">
+                        <input
+                          type="number"
+                          id={`xp-${emp.name}`}
+                          placeholder="Enter XP"
+                          className="flex-1 px-3 py-2 border-2 border-slate-200 rounded-lg text-sm focus:border-purple-500 focus:outline-none"
+                          min="1"
+                          max="1000"
+                        />
+                        <button
+                          onClick={() => {
+                            const input = document.getElementById(`xp-${emp.name}`) as HTMLInputElement;
+                            const xpAmount = parseInt(input.value);
+                            if (xpAmount && xpAmount > 0) {
+                              setEmployeeXP(prev => ({
+                                ...prev,
+                                [emp.name]: { total: (prev[emp.name]?.total || 0) + xpAmount }
+                              }));
+                              localStorage.setItem('employee-xp', JSON.stringify({
+                                ...employeeXP,
+                                [emp.name]: { total: (employeeXP[emp.name]?.total || 0) + xpAmount }
+                              }));
+                              setStatus({ type: 'success', msg: `+${xpAmount} XP awarded to ${emp.name}! 🌟` });
+                              input.value = '';
+                            }
+                          }}
+                          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-bold hover:scale-105 transition-all"
+                        >
+                          ➕ Add
+                        </button>
+                        <button
+                          onClick={() => {
+                            const input = document.getElementById(`xp-${emp.name}`) as HTMLInputElement;
+                            const xpAmount = parseInt(input.value);
+                            if (xpAmount && xpAmount > 0) {
+                              setEmployeeXP(prev => ({
+                                ...prev,
+                                [emp.name]: { total: Math.max(0, (prev[emp.name]?.total || 0) - xpAmount) }
+                              }));
+                              localStorage.setItem('employee-xp', JSON.stringify({
+                                ...employeeXP,
+                                [emp.name]: { total: Math.max(0, (employeeXP[emp.name]?.total || 0) - xpAmount) }
+                              }));
+                              setStatus({ type: 'success', msg: `-${xpAmount} XP removed from ${emp.name}` });
+                              input.value = '';
+                            }
+                          }}
+                          className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg font-bold hover:scale-105 transition-all"
+                        >
+                          ➖ Remove
+                        </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            (document.getElementById(`xp-${emp.name}`) as HTMLInputElement).value = '1';
+                          }}
+                          className="flex-1 px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold transition-all"
+                        >
+                          +1 (Small)
+                        </button>
+                        <button
+                          onClick={() => {
+                            (document.getElementById(`xp-${emp.name}`) as HTMLInputElement).value = '5';
+                          }}
+                          className="flex-1 px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-xs font-bold transition-all"
+                        >
+                          +5 (Daily)
+                        </button>
+                        <button
+                          onClick={() => {
+                            (document.getElementById(`xp-${emp.name}`) as HTMLInputElement).value = '25';
+                          }}
+                          className="flex-1 px-2 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded text-xs font-bold transition-all"
+                        >
+                          +25 (Good)
+                        </button>
+                        <button
+                          onClick={() => {
+                            (document.getElementById(`xp-${emp.name}`) as HTMLInputElement).value = '50';
+                          }}
+                          className="flex-1 px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded text-xs font-bold transition-all"
+                        >
+                          +50 (Great)
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
