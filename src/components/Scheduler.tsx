@@ -588,17 +588,6 @@ export default function Scheduler() {
     helpColleague: 30,
     managerCommendation: 200
   });
-  const [employeeXP, setEmployeeXP] = useState<Record<string, {total: number; level: number; rank: string; history: Array<{action: string; xp: number; date: number}>}>>(
-    employees.reduce((acc, emp) => {
-      acc[emp.name] = {
-        total: 0, // All employees start with 0 XP
-        level: 1,
-        rank: 'Bronze',
-        history: []
-      };
-      return acc;
-    }, {} as Record<string, {total: number; level: number; rank: string; history: Array<{action: string; xp: number; date: number}>}>)
-  );
   
   // 🔮 THE ORACLE AI STATE
   const [oracleInsights, setOracleInsights] = useState({
