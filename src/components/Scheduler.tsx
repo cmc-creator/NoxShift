@@ -1301,7 +1301,7 @@ export default function Scheduler() {
         action = 'Opened notifications';
         success = true;
       } else if (transcript.includes('ai') || transcript.includes('recommendations')) {
-        setShowOracle(true);
+        setShowOracleAI(true);
         action = 'Opened Oracle AI';
         success = true;
       } else if (transcript.includes('chat')) {
@@ -3806,7 +3806,7 @@ export default function Scheduler() {
           <span className="font-medium">{status.msg}</span>
         </div>
         <div className="text-[9px] text-slate-400 font-medium tracking-wide">
-          NoxShift™ © {new Date().getFullYear()} - All Rights Reserved
+          NoxShift™ is a product of NoxIndustries™ and NoxTitan™. © {new Date().getFullYear()} - All Rights Reserved. Trademark and Copyright Protected.
         </div>
         <div className="relative flex items-center gap-3">
             <button onClick={() => setUsePrivateStorage(!usePrivateStorage)} className={`flex items-center gap-1.5 hover:text-slate-600 transition-all px-2 py-1 rounded-lg hover:bg-white/50 ${usePrivateStorage ? 'text-blue-600 font-bold' : ''}`} title="Switch Storage (Private/Public)">
@@ -7947,8 +7947,8 @@ export default function Scheduler() {
       )}
 
       {/* 🔮 THE ORACLE AI ANALYTICS PANEL */}
-      {showOracle && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in" onClick={() => setShowOracle(false)}>
+      {showOracleAI && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in" onClick={() => setShowOracleAI(false)}>
           <div className="bg-gradient-to-br from-purple-900 via-violet-900 to-fuchsia-900 rounded-3xl p-8 max-w-7xl w-full max-h-[90vh] overflow-y-auto animate-scale-in shadow-2xl" onClick={(e) => e.stopPropagation()} style={{border: '2px solid rgba(168, 85, 247, 0.4)'}}>
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
@@ -7965,7 +7965,7 @@ export default function Scheduler() {
                   <p className="text-violet-200 font-medium">AI-Powered Workforce Analytics & Predictions</p>
                 </div>
               </div>
-              <button onClick={() => setShowOracle(false)} className="p-3 hover:bg-white/10 rounded-xl transition-all">
+              <button onClick={() => setShowOracleAI(false)} className="p-3 hover:bg-white/10 rounded-xl transition-all">
                 <X className="w-7 h-7 text-white" />
               </button>
             </div>
