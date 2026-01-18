@@ -21,6 +21,14 @@ import NotificationsCenter from './pages/NotificationsCenter'
 import TeamCalendar from './pages/TeamCalendar'
 import PhotoGallery from './pages/PhotoGallery'
 import Leaderboards from './pages/Leaderboards'
+import GoalTracker from './pages/GoalTracker'
+import NewsFeed from './pages/NewsFeed'
+import LiveChat from './pages/LiveChat'
+import OrgChart from './pages/OrgChart'
+import CareerPlanner from './pages/CareerPlanner'
+import Mentorship from './pages/Mentorship'
+import SkillMatrix from './pages/SkillMatrix'
+import AdvancedAnalytics from './pages/AdvancedAnalytics'
 import KronoAI from './components/KronoAI'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
@@ -189,6 +197,70 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <Leaderboards />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/goals" 
+              element={
+                <ProtectedRoute>
+                  <GoalTracker />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/news" 
+              element={
+                <ProtectedRoute>
+                  <NewsFeed />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/chat" 
+              element={
+                <ProtectedRoute>
+                  <LiveChat />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/org-chart" 
+              element={
+                <ProtectedRoute>
+                  <OrgChart />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/career" 
+              element={
+                <ProtectedRoute>
+                  <CareerPlanner />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/mentorship" 
+              element={
+                <ProtectedRoute>
+                  <Mentorship />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/skills" 
+              element={
+                <ProtectedRoute>
+                  <SkillMatrix />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/analytics" 
+              element={
+                <ProtectedRoute>
+                  <AdvancedAnalytics />
                 </ProtectedRoute>
               } 
             />
