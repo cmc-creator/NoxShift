@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import Sidebar from '../components/Sidebar';
 import { 
   Users, Calendar, Clock, AlertTriangle, TrendingUp, 
   CheckCircle, Activity, BarChart3, Bell, ArrowRight,
@@ -9,7 +10,9 @@ import {
 
 export default function CommandCenter() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <Sidebar />
+      <div className="flex-1 overflow-y-auto p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
@@ -192,6 +195,7 @@ export default function CommandCenter() {
         <div className="text-center text-slate-400 text-sm">
           <p>NoxShift™ Command Center • Powered by AI • Real-time Operations</p>
         </div>
+      </div>
       </div>
     </div>
   );

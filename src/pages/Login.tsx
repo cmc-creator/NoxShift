@@ -39,7 +39,7 @@ export default function Login() {
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
       }
-      navigate('/scheduler');
+      navigate('/command-center');
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     } finally {
@@ -54,7 +54,7 @@ export default function Login() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      navigate('/scheduler');
+      navigate('/command-center');
     } catch (err: any) {
       setError(err.message || 'Google sign-in failed');
     } finally {
@@ -65,7 +65,7 @@ export default function Login() {
   const handleAnonymousSignIn = async () => {
     // Bypass Firebase for guest access
     localStorage.setItem('guest-mode', 'true');
-    navigate('/scheduler');
+    navigate('/command-center');
   };
 
   return (

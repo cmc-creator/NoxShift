@@ -8279,7 +8279,7 @@ export default function Scheduler() {
       {/* 🎨 KRONO SETTINGS MODAL */}
       {showKronoSettings && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowKronoSettings(false)}>
-          <div className="glass rounded-3xl p-8 max-w-2xl w-full animate-scale-in" onClick={(e) => e.stopPropagation()}>
+          <div className="glass rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="bg-gradient-to-br from-purple-500 to-fuchsia-600 p-3 rounded-xl">
