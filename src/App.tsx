@@ -12,13 +12,19 @@ import TimeOff from './pages/TimeOff'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import ProtectedRoute from './components/ProtectedRoute'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { NotificationToast, useNotifications } from './components/NotificationToast'
+import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp'
 
-function App() {
+function AppContent() {
+  useKeyboardShortcuts();
+  const { notifications, removeNotification } = useNotifications();
+
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <BrowserRouter>
-          <Routes>
+    <>
+      <NotificationToast notifications={notifications} onRemove={removeNotification} />
+      <KeyboardShortcutsHelp />
+      <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route 
@@ -87,6 +93,16 @@ function App() {
             />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
+      </>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AppContent />
         </BrowserRouter>
       </ThemeProvider>
     </AuthProvider>

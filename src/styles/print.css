@@ -1,0 +1,70 @@
+/* Print-friendly styles */
+@media print {
+  /* Hide navigation and UI elements */
+  aside,
+  nav,
+  button,
+  .no-print,
+  .nox-tracer,
+  .sidebar {
+    display: none !important;
+  }
+
+  /* Ensure main content fills the page */
+  main,
+  .print-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+  }
+
+  /* Remove backgrounds for better printing */
+  body,
+  html {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Ensure text is readable */
+  h1, h2, h3, h4, h5, h6, p, span, div {
+    color: black !important;
+  }
+
+  /* Remove shadows and effects */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Keep borders for tables */
+  table, th, td {
+    border: 1px solid #ccc !important;
+  }
+
+  /* Page breaks */
+  .page-break {
+    page-break-after: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  /* Optimize calendar for print */
+  .calendar-view {
+    page-break-inside: avoid;
+  }
+
+  /* Show links */
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 90%;
+    color: #666;
+  }
+
+  a[href^="#"]:after,
+  a[href^="javascript:"]:after {
+    content: "";
+  }
+}
