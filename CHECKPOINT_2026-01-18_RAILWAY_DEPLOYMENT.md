@@ -1,24 +1,60 @@
-# Deployment Checkpoint - January 18, 2026, 9:30 AM
+# Deployment Checkpoint - January 18, 2026, 10:00 AM
 
 ## Current Status
 
 ### ✅ WORKING
 - **Frontend:** Live at https://noxshift.vercel.app
 - **Database:** PostgreSQL running on Railway (connected)
-- **Repository:** All code pushed to GitHub (latest commit: 0d8811b)
-- **Configuration Files:** railway.json and schema.prisma updated for PostgreSQL
+- **Repository:** All code pushed to GitHub (latest commit: 5cf3f00)
+- **Server:** Running successfully locally with tsx
+- **Configuration Files:** railway.json and schema.prisma properly configured
 
-### ❌ NOT WORKING YET
-- **Backend API:** Railway deployment failing
-- Need to check latest deployment logs to see the error
+### 🔄 IN PROGRESS
+- **Backend API:** Redeploying on Railway with fixes
+- Railway should auto-deploy from latest push
+- Expected URL: https://noxshift-production.up.railway.app
 
-## What We've Fixed So Far
+## Fixes Applied (Latest Session)
 
-1. **Railway Config Created** - railway.json with correct build/start commands
-2. **tsx Moved to Dependencies** - Required for running TypeScript in production
-3. **Removed Old Dockerfile** - Was causing Railway to ignore railway.json
-4. **Switched to PostgreSQL** - Changed schema.prisma from SQLite to PostgreSQL
-5. **Moved db push to Startup** - Running `npx prisma db push` when container starts (DATABASE_URL available)
+### 1. **Fixed Import Extensions** (Commit: 2836515)
+**Problem:** Server files were importing with `.ts` extensions, which can cause issues with `tsx` module resolution.
+
+**Changes Made:**
+- [server/index.js](c:\Users\ConnieCooper\NoxShift\server\index.js): Changed imports from `./routes/auth.ts` → `./routes/auth.js`
+- [server/routes/auth.ts](c:\Users\ConnieCooper\NoxShift\server\routes\auth.ts): Changed `../db/prisma.ts` → `../db/prisma.js`
+- [server/routes/employees.ts](c:\Users\ConnieCooper\NoxShift\server\routes\employees.ts): Fixed all imports
+- [server/routes/schedules.ts](c:\Users\ConnieCooper\NoxShift\server\routes\schedules.ts): Fixed all imports
+- [server/routes/timeoff.ts](c:\Users\ConnieCooper\NoxShift\server\routes\timeoff.ts): Fixed all imports
+
+**Why:** When using `tsx` with ES modules, imports should use `.js` extensions (or no extensions) rather than `.ts`, as `tsx` handles the TypeScript transpilation internally.
+
+### 2. **Updated Server Binding** (Commit: 2836515)
+**Problem:** Server was only binding to localhost, which prevents Railway from accessing it.
+
+**Change:**
+```javascript
+// Before
+app.listen(PORT, () => { ... });
+
+// After
+app.listen(PORT, '0.0.0.0', () => { ... });
+```
+
+**Why:** Railway needs the server to bind to `0.0.0.0` (all interfaces) rather than just `localhost` so it can be accessed externally.
+
+### 3. **Optimized Railway Start Command** (Commit: 5cf3f00)
+**Problem:** Using `npm run server` adds an unnecessary layer.
+
+**Change:**
+```json
+// Before
+"startCommand": "npx prisma db push --accept-data-loss && npm run server"
+
+// After  
+"startCommand": "npx prisma db push --accept-data-loss && npx tsx server/index.js"
+```
+
+**Why:** Running `npx tsx` directly is more reliable and reduces potential npm script issues.
 
 ## Current Configuration
 
@@ -66,38 +102,71 @@ datasource db {
   - Postgres (database - online ✅)
 - **Expected URL:** https://noxshift-production.up.railway.app
 
-## Next Steps When You Return
+## Next Steps - Monitor Railway Deployment
 
-### 1. Check Latest Deployment Logs
-Go to Railway → NoxShift service → Deployments → Click latest deployment → Check both:
-- **Build Logs** - See if build completed
-- **Deploy Logs** - See actual error message
+### 1. Check Railway Deployment Status
+The push to GitHub should have triggered an automatic Railway deployment. To check:
+1. Go to **Railway Dashboard**: https://railway.app/project/gregarious-nourishment
+2. Click on **NoxShift** service
+3. Go to **Deployments** tab
+4. Check the latest deployment (should be from commit `5cf3f00`)
 
-### 2. Common Issues to Look For
-- Database connection errors
-- Missing environment variables
-- Port binding issues
-- Prisma migration failures
+### 2. What to Look For in Logs
 
-### 3. If Build Succeeded But Deploy Failed
-Check Deploy Logs for:
+**Build Logs - Should Show:**
 ```
-Error: listen EADDRINUSE
-Error: Connection refused
-Error: Cannot connect to database
-Prisma migration errors
+✓ Installing dependencies: npm install
+✓ Generating Prisma client: npx prisma generate  
+✓ Build completed successfully
 ```
 
-### 4. Quick Debug Commands (if needed)
-If you need to test locally with PostgreSQL:
+**Deploy Logs - Should Show:**
+```
+Environment: production
+Pushing Prisma schema to database...
+🟢 Your database is now in sync with your Prisma schema.
+✅ NoxShift API server running on port XXXX
+📡 Health check: http://localhost:XXXX/api/health
+🚀 Environment: production
+```
+
+### 3. Test the Deployment
+
+Once the deployment succeeds, test these endpoints:
+
+**Health Check:**
 ```bash
-# Install PostgreSQL locally (if not done)
-# Update local .env with Railway DATABASE_URL
-npx prisma db push
-npm run server
+curl https://noxshift-production.up.railway.app/api/health
 ```
 
-### 5. After Backend Works
+**Expected Response:**
+```json
+{
+  "status": "ok",
+  "message": "NoxShift API is running",
+  "timestamp": "2026-01-18T..."
+}
+```
+
+### 4. Connect Frontend to Backend
+
+After backend is confirmed working:
+
+1. **Add Environment Variable to Vercel:**
+   - Go to: https://vercel.com/dashboard → NoxShift project → Settings → Environment Variables
+   - Add new variable:
+     - Name: `VITE_API_URL`
+     - Value: `https://noxshift-production.up.railway.app/api`
+     - Environment: Production, Preview, Development
+
+2. **Redeploy Vercel Frontend:**
+   - Deployments tab → Click "..." on latest → Redeploy
+   - Or push any change to trigger auto-deploy
+
+3. **Test Full Application:**
+   - Go to: https://noxshift.vercel.app
+   - Try to sign up / log in
+   - Create employees, schedules, etc.
 Once Railway deployment succeeds:
 1. Test health endpoint: https://noxshift-production.up.railway.app/api/health
 2. Add `VITE_API_URL` to Vercel (Settings → Environment Variables)
