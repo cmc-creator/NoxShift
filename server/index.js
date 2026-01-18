@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.ts';
-import employeeRoutes from './routes/employees.ts';
-import scheduleRoutes from './routes/schedules.ts';
-import timeoffRoutes from './routes/timeoff.ts';
+import authRoutes from './routes/auth.js';
+import employeeRoutes from './routes/employees.js';
+import scheduleRoutes from './routes/schedules.js';
+import timeoffRoutes from './routes/timeoff.js';
 
 dotenv.config();
 
@@ -40,7 +40,8 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ NoxShift API server running on port ${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🚀 Environment: ${process.env.NODE_ENV}`);
 });
