@@ -11,6 +11,11 @@ import Employees from './pages/Employees'
 import TimeOff from './pages/TimeOff'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
+import Payroll from './pages/Payroll'
+import PerformanceReviews from './pages/PerformanceReviews'
+import Training from './pages/Training'
+import Compliance from './pages/Compliance'
+import MultiLocation from './pages/MultiLocation'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { NotificationToast, useNotifications } from './components/NotificationToast'
@@ -88,6 +93,46 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/payroll" 
+              element={
+                <ProtectedRoute>
+                  <Payroll />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/performance" 
+              element={
+                <ProtectedRoute>
+                  <PerformanceReviews />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/training" 
+              element={
+                <ProtectedRoute>
+                  <Training />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/compliance" 
+              element={
+                <ProtectedRoute>
+                  <Compliance />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/locations" 
+              element={
+                <ProtectedRoute>
+                  <MultiLocation />
                 </ProtectedRoute>
               } 
             />

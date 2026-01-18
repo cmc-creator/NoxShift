@@ -112,6 +112,7 @@ import { CSS } from '@dnd-kit/utilities';
 import html2canvas from 'html2canvas';
 import QRCode from 'qrcode';
 import ThemeSelector from './ThemeSelector';
+import CustomizationPanel from './CustomizationPanel';
 import { useAuth } from '../context/AuthContext';
 import GuildDashboard from '../features/guild/GuildDashboard';
 import { useTheme } from '../context/ThemeContext';
@@ -3633,7 +3634,14 @@ export default function Scheduler() {
                         <Palette className="w-5 h-5 text-purple-600" />
                         <div className="flex-1">
                           <div className="font-semibold text-sm">Themes</div>
-                          <div className="text-xs text-slate-500">Visual customization</div>
+                          <div className="text-xs text-slate-500">40+ visual themes</div>
+                        </div>
+                      </button>
+                      <button onClick={() => { setShowKronoSettings(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
+                        <Settings className="w-5 h-5 text-orange-600" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm">Advanced Customization</div>
+                          <div className="text-xs text-slate-500">Budget, rewards, colors</div>
                         </div>
                       </button>
                       <button onClick={() => { setShowNotifications(true); setShowMenuDropdown(false); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/50 flex items-center gap-3 transition-all">
@@ -8276,157 +8284,13 @@ export default function Scheduler() {
         </div>
       )}
 
-      {/* 🎨 KRONO SETTINGS MODAL */}
+      {/* 🎨 CUSTOMIZATION PANEL */}
       {showKronoSettings && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowKronoSettings(false)}>
-          <div className="glass rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-purple-500 to-fuchsia-600 p-3 rounded-xl">
-                  <Settings className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black gradient-text">Customize Krono</h2>
-                  <p className="text-sm text-slate-500">Personalize your AI assistant</p>
-                </div>
-              </div>
-              <button onClick={() => setShowKronoSettings(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Name Input */}
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Assistant Name</label>
-                <input
-                  type="text"
-                  value={kronoName}
-                  onChange={(e) => {
-                    setKronoName(e.target.value);
-                    localStorage.setItem('krono-name', e.target.value);
-                  }}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-purple-500 focus:outline-none"
-                  placeholder="Enter assistant name"
-                />
-              </div>
-
-              {/* Avatar Selector */}
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-3">Choose Avatar</label>
-                <div className="grid grid-cols-6 gap-3">
-                  {['🤖', '🦾', '💬', '⚡', '🧠', '🎯', '🚀', '✨', '💫', '🌟', '⭐', '🔮'].map(emoji => (
-                    <button
-                      key={emoji}
-                      onClick={() => {
-                        setKronoAvatar(emoji);
-                        localStorage.setItem('krono-avatar', emoji);
-                      }}
-                      className={`text-3xl p-4 rounded-xl border-2 transition-all hover:scale-110 ${kronoAvatar === emoji ? 'border-purple-500 bg-purple-50 scale-110' : 'border-slate-200 hover:border-purple-300'}`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Color Scheme */}
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-3">Color Theme</label>
-                <div className="grid grid-cols-4 gap-3">
-                  {[
-                    { name: 'purple', label: 'Purple', gradient: 'from-purple-500 to-fuchsia-600' },
-                    { name: 'blue', label: 'Blue', gradient: 'from-blue-500 to-cyan-600' },
-                    { name: 'green', label: 'Green', gradient: 'from-emerald-500 to-teal-600' },
-                    { name: 'red', label: 'Red', gradient: 'from-red-500 to-pink-600' }
-                  ].map(color => (
-                    <button
-                      key={color.name}
-                      onClick={() => {
-                        setKronoColor(color.name);
-                        localStorage.setItem('krono-color', color.name);
-                      }}
-                      className={`p-4 rounded-xl border-2 transition-all ${kronoColor === color.name ? 'border-slate-900 scale-105' : 'border-slate-200 hover:scale-105'}`}
-                    >
-                      <div className={`h-12 rounded-lg bg-gradient-to-r ${color.gradient} mb-2`}></div>
-                      <div className="text-xs font-bold text-slate-700">{color.label}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Voice Settings */}
-              <div className="border-t-2 border-slate-200 pt-6">
-                <h3 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
-                  <Volume2 className="w-5 h-5 text-purple-600" />
-                  Voice Features
-                </h3>
-                
-                {/* Enable Voice */}
-                <div className="flex items-center justify-between mb-4 p-4 bg-slate-50 rounded-xl">
-                  <div>
-                    <div className="font-bold text-slate-700">Enable Voice Responses</div>
-                    <div className="text-xs text-slate-500">Krono will speak responses aloud</div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const newValue = !kronoVoiceEnabled;
-                      setKronoVoiceEnabled(newValue);
-                      localStorage.setItem('krono-voice-enabled', String(newValue));
-                    }}
-                    className={`relative w-14 h-7 rounded-full transition-all ${kronoVoiceEnabled ? 'bg-purple-600' : 'bg-slate-300'}`}
-                  >
-                    <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${kronoVoiceEnabled ? 'left-8' : 'left-1'}`}></div>
-                  </button>
-                </div>
-
-                {/* Voice Selector */}
-                {kronoVoiceEnabled && (
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Select Voice</label>
-                    <select
-                      value={kronoVoice}
-                      onChange={(e) => {
-                        setKronoVoice(e.target.value);
-                        localStorage.setItem('krono-voice', e.target.value);
-                      }}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-purple-500 focus:outline-none"
-                    >
-                      <option value="">System Default</option>
-                      {window.speechSynthesis && window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en')).map((voice, idx) => (
-                        <option key={idx} value={voice.name}>{voice.name} ({voice.lang})</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-              
-              {/* 🎭 Fun Accessories */}
-              <div className="border-t-2 border-slate-200 pt-6">
-                <h3 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
-                  ✨ Fun Accessories
-                </h3>
-                <div className="grid grid-cols-8 gap-2">
-                  {['', '👓', '🕶️', '🎩', '👑', '🎀', '🧢', '⛑️', '🎓', '💼', '🎸', '⚡', '🔥', '💎', '🌈', '⭐'].map((accessory, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        const baseEmoji = kronoAvatar.length > 2 ? kronoAvatar[0] : kronoAvatar;
-                        setKronoAvatar(accessory ? baseEmoji + accessory : baseEmoji);
-                        localStorage.setItem('krono-avatar', accessory ? baseEmoji + accessory : baseEmoji);
-                      }}
-                      className={`text-2xl p-2 rounded-lg border-2 transition-all hover:scale-110 ${kronoAvatar.includes(accessory) && accessory ? 'border-purple-500 bg-purple-50' : 'border-slate-200 hover:border-purple-300'}`}
-                      title={accessory || 'None'}
-                    >
-                      {accessory || '∅'}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-slate-500 mt-2">Add glasses, hats, accessories and more to your assistant!</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CustomizationPanel 
+          onClose={() => setShowKronoSettings(false)}
+          customization={customization}
+          setCustomization={setCustomization}
+        />
       )}
 
       {/* 🎯 MANAGER COMMAND CENTER */}

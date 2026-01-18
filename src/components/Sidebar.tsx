@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Command, Users, Calendar, Clock, FileText, Settings, LogOut, Crown, Home, BarChart2, LayoutDashboard } from 'lucide-react'
+import { Command, Users, Calendar, Clock, FileText, Settings, LogOut, Crown, Home, BarChart2, LayoutDashboard, DollarSign, Award, GraduationCap, Shield, MapPin } from 'lucide-react'
 import { auth } from '../lib/firebase'
 import { signOut } from 'firebase/auth'
 
@@ -24,6 +24,11 @@ export default function Sidebar() {
     { path: '/basecamp', icon: Home, label: 'Basecamp' },
     { path: '/employees', icon: Users, label: 'Employees' },
     { path: '/timeoff', icon: Clock, label: 'Time Off' },
+    { path: '/payroll', icon: DollarSign, label: 'Payroll' },
+    { path: '/performance', icon: Award, label: 'Performance' },
+    { path: '/training', icon: GraduationCap, label: 'Training' },
+    { path: '/compliance', icon: Shield, label: 'Compliance' },
+    { path: '/locations', icon: MapPin, label: 'Locations' },
     { path: '/reports', icon: BarChart2, label: 'Reports' },
     { path: '/settings', icon: Settings, label: 'Settings' },
   ]
@@ -42,7 +47,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = location.pathname === item.path
@@ -57,7 +62,7 @@ export default function Sidebar() {
               } ${item.highlight ? 'border-2 border-yellow-400/30' : ''}`}
             >
               <Icon className={`w-5 h-5 ${item.highlight ? 'text-yellow-400' : ''}`} />
-              <span className="font-semibold">{item.label}</span>
+              <span className="font-semibold text-sm">{item.label}</span>
               {item.highlight && <Crown className="w-4 h-4 text-yellow-400 ml-auto" />}
             </Link>
           )

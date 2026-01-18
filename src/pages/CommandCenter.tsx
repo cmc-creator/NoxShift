@@ -93,38 +93,16 @@ export default function CommandCenter() {
         {/* Main Action Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Schedule Manager */}
-          <Link to="/scheduler">
-            <div className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-purple-500/30 hover:border-purple-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-purple-500/20 rounded-xl">
-                  <Calendar className="w-8 h-8 text-purple-400" />
-                </div>
-                <ArrowRight className="w-6 h-6 text-purple-400 group-hover:translate-x-2 transition-transform" />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Schedule Manager</h3>
-              <p className="text-purple-300 text-sm mb-4">View & edit schedules, manage shifts</p>
-              <div className="flex items-center gap-2 text-sm text-purple-400">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span>Live calendar</span>
-              </div>
-            </div>
-          </Link>
-
-          {/* Time Tracking */}
-          <div className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-blue-500/30 hover:border-blue-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
+          <Link to="/scheduler" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-purple-500/30 hover:border-purple-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-500/20 rounded-xl">
-                <Clock className="w-8 h-8 text-blue-400" />
+              <div className="p-3 bg-purple-500/20 rounded-xl">
+                <Calendar className="w-8 h-8 text-purple-400" />
               </div>
-              <ArrowRight className="w-6 h-6 text-blue-400 group-hover:translate-x-2 transition-transform" />
+              <ArrowRight className="w-6 h-6 text-purple-400 group-hover:translate-x-2 transition-transform" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">Time Tracking</h3>
-            <p className="text-blue-300 text-sm mb-4">Monitor attendance & hours</p>
-            <div className="flex items-center gap-2 text-sm text-blue-400">
-              <span className="font-bold">42</span>
-              <span>employees on duty</span>
-            </div>
-          </div>
+            <h3 className="text-2xl font-bold text-white mb-2">Schedule Manager</h3>
+            <p className="text-purple-300 text-sm mb-4">View & edit schedules, manage shifts</p>
+          </Link>
 
           {/* Team Management */}
           <Link to="/employees" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-green-500/30 hover:border-green-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
@@ -136,10 +114,78 @@ export default function CommandCenter() {
             </div>
             <h3 className="text-2xl font-bold text-white mb-2">Team Management</h3>
             <p className="text-green-300 text-sm mb-4">Manage employees & roles</p>
-            <div className="flex items-center gap-2 text-sm text-green-400">
-              <span className="font-bold">47</span>
-              <span>active employees</span>
+          </Link>
+
+          {/* Time Off Requests */}
+          <Link to="/timeoff" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-amber-500/30 hover:border-amber-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-amber-500/20 rounded-xl">
+                <Inbox className="w-8 h-8 text-amber-400" />
+              </div>
+              <ArrowRight className="w-6 h-6 text-amber-400 group-hover:translate-x-2 transition-transform" />
             </div>
+            <h3 className="text-2xl font-bold text-white mb-2">Time Off Requests</h3>
+            <p className="text-amber-300 text-sm mb-4">Approve or deny requests</p>
+          </Link>
+
+          {/* Payroll */}
+          <Link to="/payroll" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-emerald-500/30 hover:border-emerald-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-emerald-500/20 rounded-xl">
+                <DollarSign className="w-8 h-8 text-emerald-400" />
+              </div>
+              <ArrowRight className="w-6 h-6 text-emerald-400 group-hover:translate-x-2 transition-transform" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">Payroll Integration</h3>
+            <p className="text-emerald-300 text-sm mb-4">Export to ADP, Gusto, QuickBooks</p>
+          </Link>
+
+          {/* Performance Reviews */}
+          <Link to="/performance" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-yellow-500/30 hover:border-yellow-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-yellow-500/20 rounded-xl">
+                <BarChart2 className="w-8 h-8 text-yellow-400" />
+              </div>
+              <ArrowRight className="w-6 h-6 text-yellow-400 group-hover:translate-x-2 transition-transform" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">Performance Reviews</h3>
+            <p className="text-yellow-300 text-sm mb-4">Employee evaluations & goals</p>
+          </Link>
+
+          {/* Training & LMS */}
+          <Link to="/training" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-blue-500/30 hover:border-blue-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-blue-500/20 rounded-xl">
+                <Clock className="w-8 h-8 text-blue-400" />
+              </div>
+              <ArrowRight className="w-6 h-6 text-blue-400 group-hover:translate-x-2 transition-transform" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">Training & LMS</h3>
+            <p className="text-blue-300 text-sm mb-4">Courses, certificates & compliance</p>
+          </Link>
+
+          {/* Compliance Dashboard */}
+          <Link to="/compliance" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-red-500/30 hover:border-red-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-red-500/20 rounded-xl">
+                <TrendingUp className="w-8 h-8 text-red-400" />
+              </div>
+              <ArrowRight className="w-6 h-6 text-red-400 group-hover:translate-x-2 transition-transform" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">Compliance</h3>
+            <p className="text-red-300 text-sm mb-4">OSHA, CMS, Joint Commission</p>
+          </Link>
+
+          {/* Multi-Location */}
+          <Link to="/locations" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-pink-500/30 hover:border-pink-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-pink-500/20 rounded-xl">
+                <Users className="w-8 h-8 text-pink-400" />
+              </div>
+              <ArrowRight className="w-6 h-6 text-pink-400 group-hover:translate-x-2 transition-transform" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">Multi-Location</h3>
+            <p className="text-pink-300 text-sm mb-4">Manage multiple facilities</p>
           </Link>
 
           {/* Analytics */}
@@ -150,44 +196,8 @@ export default function CommandCenter() {
               </div>
               <ArrowRight className="w-6 h-6 text-cyan-400 group-hover:translate-x-2 transition-transform" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">Analytics</h3>
-            <p className="text-cyan-300 text-sm mb-4">Reports & insights</p>
-            <div className="flex items-center gap-2 text-sm text-cyan-400">
-              <TrendingUp className="w-4 h-4" />
-              <span>94% efficiency</span>
-            </div>
-          </Link>
-
-          {/* Payroll */}
-          <div className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-emerald-500/30 hover:border-emerald-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-emerald-500/20 rounded-xl">
-                <DollarSign className="w-8 h-8 text-emerald-400" />
-              </div>
-              <ArrowRight className="w-6 h-6 text-emerald-400 group-hover:translate-x-2 transition-transform" />
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-2">Payroll</h3>
-            <p className="text-emerald-300 text-sm mb-4">Review hours & process pay</p>
-            <div className="flex items-center gap-2 text-sm text-emerald-400">
-              <span className="font-bold">$45,230</span>
-              <span>this period</span>
-            </div>
-          </div>
-
-          {/* Requests */}
-          <Link to="/timeoff" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-amber-500/30 hover:border-amber-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-amber-500/20 rounded-xl">
-                <Inbox className="w-8 h-8 text-amber-400" />
-              </div>
-              <ArrowRight className="w-6 h-6 text-amber-400 group-hover:translate-x-2 transition-transform" />
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-2">Time Off Requests</h3>
-            <p className="text-amber-300 text-sm mb-4">Approve or deny requests</p>
-            <div className="flex items-center gap-2 text-sm text-amber-400">
-              <span className="font-bold">5</span>
-              <span>pending approval</span>
-            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">Analytics & Reports</h3>
+            <p className="text-cyan-300 text-sm mb-4">Business intelligence & insights</p>
           </Link>
         </div>
 
