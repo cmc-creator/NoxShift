@@ -21,21 +21,36 @@ Before running this project, make sure you have:
 
 - **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
 - **npm** or **yarn** package manager
+- **Git** - [Download here](https://git-scm.com/downloads)
 
-## Installation
+## Quick Start
 
-1. Install dependencies:
+### 🆕 Setting up on a new computer?
+
+**See [NEW_COMPUTER_SETUP.md](NEW_COMPUTER_SETUP.md)** for a complete step-by-step guide for cloning and setting up this repository on a new machine.
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/cmc-creator/NoxShift.git
+cd NoxShift
+```
+
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Create a `.env` file in the root directory:
+3. Create a `.env` file in the root directory:
 ```env
 DATABASE_URL="file:./dev.db"
 PORT=5000
+JWT_SECRET="your-super-secret-jwt-key-minimum-32-characters-long"
+VITE_API_URL=http://localhost:5000/api
 ```
 
-3. Set up the database:
+4. Set up the database:
 ```bash
 npx prisma generate
 npx prisma db push
