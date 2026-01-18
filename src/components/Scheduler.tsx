@@ -3313,7 +3313,7 @@ export default function Scheduler() {
             {/* MENU DROPDOWN */}
             <div className="relative">
               <button 
-                onClick={() => setShowMenu(!showMenu)} 
+                onClick={() => setShowMenuDropdown(!showMenuDropdown)} 
                 className="nox-tracer p-3 print:hidden"
                 title="More Options"
                 style={{'--tracer-color': '#e879f9'} as React.CSSProperties}
