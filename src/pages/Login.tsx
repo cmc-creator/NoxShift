@@ -27,7 +27,7 @@ export default function Login() {
 
     try {
       // Check for VIP code first
-      if (vipCode === 'RISK424') {
+      if (vipCode === 'NOX424') {
         localStorage.setItem('vip', 'true');
         localStorage.setItem('userRole', 'admin');
         navigate('/command-center');
