@@ -87,7 +87,7 @@ export function BackgroundMusic({ autoPlay = true, showControls = true }: Backgr
       />
       
       {/* Floating Music Control */}
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-black/50 backdrop-blur-xl border border-white/20 rounded-full px-4 py-2 shadow-2xl">
+      <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2 bg-black/50 backdrop-blur-xl border border-white/20 rounded-full px-4 py-2 shadow-2xl">
         <Music className="w-4 h-4 text-purple-400 animate-pulse" />
         <span className="text-white text-xs font-semibold">Epic Music</span>
         
