@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.js';
-import employeeRoutes from './routes/employees.js';
-import scheduleRoutes from './routes/schedules.js';
-import timeoffRoutes from './routes/timeoff.js';
+import authRoutes from './routes/auth.ts';
+import employeeRoutes from './routes/employees.ts';
+import scheduleRoutes from './routes/schedules.ts';
+import timeoffRoutes from './routes/timeoff.ts';
 
 dotenv.config();
 

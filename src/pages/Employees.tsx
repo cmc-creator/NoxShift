@@ -1,25 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users, UserPlus, Search, Filter, Mail, Phone, Calendar, MapPin, Briefcase,
   Clock, DollarSign, Award, Settings, Edit, Trash2, MoreVertical, ChevronRight,
-  Home, CheckCircle, XCircle, AlertCircle, Star, Target, TrendingUp
+  Home, CheckCircle, XCircle, AlertCircle, Star, Target, TrendingUp, Loader2
 } from 'lucide-react';
+import { employeeAPI } from '../services/api';
 
 interface Employee {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  phone: string;
-  role: string;
-  department: string;
-  hireDate: string;
-  status: 'active' | 'on-leave' | 'inactive';
-  hourlyRate: number;
-  weeklyHours: number;
-  avatar?: string;
-  certifications?: string[];
-  performanceRating?: number;
+  phone?: string;
+  position?: string;
+  department?: string;
+  hireDate?: string;
+  status: string;
+  hourlyRate?: number;
+  maxHoursPerWeek?: number;
 }
 
 export default function Employees() {
@@ -28,87 +27,48 @@ export default function Employees() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      id: '1',
-      name: 'Izzy Cooper',
-      email: 'izzy@noxshift.com',
-      phone: '(555) 123-4567',
-      role: 'Reception',
-      department: 'Front Desk',
-      hireDate: '2025-01-15',
-      status: 'active',
-      hourlyRate: 18.50,
-      weeklyHours: 40,
-      certifications: ['CPR', 'First Aid'],
-      performanceRating: 4.8
-    },
-    {
-      id: '2',
-      name: 'Sarah Johnson',
-      email: 'sarah.j@noxshift.com',
-      phone: '(555) 234-5678',
-      role: 'Registered Nurse',
-      department: 'Nursing',
-      hireDate: '2024-03-10',
-      status: 'active',
-      hourlyRate: 35.00,
-      weeklyHours: 36,
-      certifications: ['RN License', 'ACLS', 'PALS'],
-      performanceRating: 4.9
-    },
-    {
-      id: '3',
-      name: 'Michael Chen',
-      email: 'michael.c@noxshift.com',
-      phone: '(555) 345-6789',
-      role: 'Medical Assistant',
-      department: 'Clinical',
-      hireDate: '2024-08-22',
-      status: 'active',
-      hourlyRate: 22.00,
-      weeklyHours: 40,
-      certifications: ['CMA', 'BLS'],
-      performanceRating: 4.6
-    },
-    {
-      id: '4',
-      name: 'Emily Davis',
-      email: 'emily.d@noxshift.com',
-      phone: '(555) 456-7890',
-      role: 'Lab Technician',
-      department: 'Laboratory',
-      hireDate: '2023-11-05',
-      status: 'on-leave',
-      hourlyRate: 28.50,
-      weeklyHours: 40,
-      certifications: ['MLT', 'Phlebotomy'],
-      performanceRating: 4.7
-    },
-    {
-      id: '5',
-      name: 'James Wilson',
-      email: 'james.w@noxshift.com',
-      phone: '(555) 567-8901',
-      role: 'Pharmacy Tech',
-      department: 'Pharmacy',
-      hireDate: '2024-06-18',
-      status: 'active',
-      hourlyRate: 24.00,
-      weeklyHours: 32,
-      certifications: ['CPhT', 'PTCB'],
-      performanceRating: 4.5
+  // Load employees from API
+  useEffect(() => {
+    loadEmployees();
+  }, []);
+
+  const loadEmployees = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await employeeAPI.getAll();
+      setEmployees(response.employees || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load employees');
+      console.error('Error loading employees:', err);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  const handleDeleteEmployee = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this employee?')) return;
+    
+    try {
+      await employeeAPI.delete(id);
+      await loadEmployees();
+    } catch (err: any) {
+      alert('Failed to delete employee: ' + err.message);
+    }
+  };
 
   const departments = ['all', 'Front Desk', 'Nursing', 'Clinical', 'Laboratory', 'Pharmacy', 'Administration'];
-  const statuses = ['all', 'active', 'on-leave', 'inactive'];
+  const statuses = ['all', 'ACTIVE', 'ON_LEAVE', 'INACTIVE'];
 
   const filteredEmployees = employees.filter(emp => {
-    const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
+    const matchesSearch = fullName.includes(searchTerm.toLowerCase()) ||
                          emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         emp.role.toLowerCase().includes(searchTerm.toLowerCase());
+                         (emp.position && emp.position.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesDepartment = filterDepartment === 'all' || emp.department === filterDepartment;
     const matchesStatus = filterStatus === 'all' || emp.status === filterStatus;
     return matchesSearch && matchesDepartment && matchesStatus;
@@ -116,24 +76,50 @@ export default function Employees() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'text-green-400 bg-green-400/20';
-      case 'on-leave': return 'text-yellow-400 bg-yellow-400/20';
-      case 'inactive': return 'text-red-400 bg-red-400/20';
+      case 'ACTIVE': return 'text-green-400 bg-green-400/20';
+      case 'ON_LEAVE': return 'text-yellow-400 bg-yellow-400/20';
+      case 'INACTIVE': return 'text-red-400 bg-red-400/20';
       default: return 'text-gray-400 bg-gray-400/20';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'active': return <CheckCircle className="w-4 h-4" />;
-      case 'on-leave': return <AlertCircle className="w-4 h-4" />;
-      case 'inactive': return <XCircle className="w-4 h-4" />;
+      case 'ACTIVE': return <CheckCircle className="w-4 h-4" />;
+      case 'ON_LEAVE': return <AlertCircle className="w-4 h-4" />;
+      case 'INACTIVE': return <XCircle className="w-4 h-4" />;
       default: return null;
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-16 h-16 text-blue-400 animate-spin mx-auto mb-4" />
+          <p className="text-white text-xl">Loading employees...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-4 mx-6 mt-4">
+          <p className="font-semibold">Error: {error}</p>
+          <button onClick={loadEmployees} className="text-red-400 underline mt-2">Retry</button>
+        </div>
+      )}
+      
+      {/* Success banner */}
+      {!loading && !error && employees.length > 0 && (
+        <div className="bg-blue-500/20 border border-blue-400 text-blue-200 px-4 py-3 rounded-lg mx-6 mt-4 mb-2">
+          ✅ Connected to Backend! This data is coming from your Express API + PostgreSQL database.
+        </div>
+      )}
+      
       {/* Header */}
       <div className="bg-white/10 backdrop-blur-xl border-b border-white/20 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -172,7 +158,7 @@ export default function Employees() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-green-200 text-sm">Active</p>
-                  <p className="text-3xl font-bold text-white">{employees.filter(e => e.status === 'active').length}</p>
+                  <p className="text-3xl font-bold text-white">{employees.filter(e => e.status === 'ACTIVE').length}</p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-400" />
               </div>
@@ -181,7 +167,7 @@ export default function Employees() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-yellow-200 text-sm">On Leave</p>
-                  <p className="text-3xl font-bold text-white">{employees.filter(e => e.status === 'on-leave').length}</p>
+                  <p className="text-3xl font-bold text-white">{employees.filter(e => e.status === 'ON_LEAVE').length}</p>
                 </div>
                 <AlertCircle className="w-8 h-8 text-yellow-400" />
               </div>
@@ -189,10 +175,10 @@ export default function Employees() {
             <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-200 text-sm">Avg Rating</p>
-                  <p className="text-3xl font-bold text-white">4.7</p>
+                  <p className="text-purple-200 text-sm">Departments</p>
+                  <p className="text-3xl font-bold text-white">{new Set(employees.map(e => e.department).filter(Boolean)).size}</p>
                 </div>
-                <Star className="w-8 h-8 text-purple-400" />
+                <Target className="w-8 h-8 text-purple-400" />
               </div>
             </div>
           </div>
@@ -243,70 +229,70 @@ export default function Employees() {
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4 flex-1">
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center text-2xl text-white font-bold">
-                    {employee.name.split(' ').map(n => n[0]).join('')}
+                    {employee.firstName[0]}{employee.lastName[0]}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-white">{employee.name}</h3>
+                      <h3 className="text-xl font-bold text-white">{employee.firstName} {employee.lastName}</h3>
                       <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(employee.status)}`}>
                         {getStatusIcon(employee.status)}
-                        {employee.status}
+                        {employee.status.replace('_', ' ')}
                       </span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center gap-2 text-blue-200">
-                        <Briefcase className="w-4 h-4" />
-                        {employee.role}
-                      </div>
+                      {employee.position && (
+                        <div className="flex items-center gap-2 text-blue-200">
+                          <Briefcase className="w-4 h-4" />
+                          {employee.position}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 text-blue-200">
                         <Mail className="w-4 h-4" />
                         {employee.email}
                       </div>
-                      <div className="flex items-center gap-2 text-blue-200">
-                        <Phone className="w-4 h-4" />
-                        {employee.phone}
-                      </div>
-                      <div className="flex items-center gap-2 text-blue-200">
-                        <Calendar className="w-4 h-4" />
-                        Hired {employee.hireDate}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-6 mt-3">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-green-400" />
-                        <span className="text-white font-semibold">${employee.hourlyRate}/hr</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-purple-400" />
-                        <span className="text-white">{employee.weeklyHours}h/week</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Target className="w-4 h-4 text-yellow-400" />
-                        <span className="text-white">{employee.department}</span>
-                      </div>
-                      {employee.performanceRating && (
-                        <div className="flex items-center gap-2">
-                          <Star className="w-4 h-4 text-yellow-400" />
-                          <span className="text-white font-semibold">{employee.performanceRating}/5.0</span>
+                      {employee.phone && (
+                        <div className="flex items-center gap-2 text-blue-200">
+                          <Phone className="w-4 h-4" />
+                          {employee.phone}
+                        </div>
+                      )}
+                      {employee.hireDate && (
+                        <div className="flex items-center gap-2 text-blue-200">
+                          <Calendar className="w-4 h-4" />
+                          Hired {new Date(employee.hireDate).toLocaleDateString()}
                         </div>
                       )}
                     </div>
-                    {employee.certifications && employee.certifications.length > 0 && (
-                      <div className="flex items-center gap-2 mt-3">
-                        <Award className="w-4 h-4 text-cyan-400" />
-                        <div className="flex gap-2 flex-wrap">
-                          {employee.certifications.map(cert => (
-                            <span key={cert} className="px-2 py-1 bg-cyan-400/20 text-cyan-300 rounded text-xs font-semibold">
-                              {cert}
-                            </span>
-                          ))}
+                    <div className="flex items-center gap-6 mt-3">
+                      {employee.hourlyRate && (
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-green-400" />
+                          <span className="text-white font-semibold">${employee.hourlyRate.toFixed(2)}/hr</span>
                         </div>
-                      </div>
-                    )}
+                      )}
+                      {employee.maxHoursPerWeek && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-purple-400" />
+                          <span className="text-white">{employee.maxHoursPerWeek}h/week</span>
+                        </div>
+                      )}
+                      {employee.department && (
+                        <div className="flex items-center gap-2">
+                          <Target className="w-4 h-4 text-yellow-400" />
+                          <span className="text-white">{employee.department}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                  <MoreVertical className="w-5 h-5 text-white" />
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteEmployee(employee.id);
+                  }}
+                  className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-5 h-5 text-red-400" />
                 </button>
               </div>
             </div>

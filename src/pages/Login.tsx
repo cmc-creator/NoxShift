@@ -8,14 +8,18 @@ import {
   signInWithPopup
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { authAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Lock, Mail, User, Zap, Shield, Chrome, Sparkles } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -35,11 +39,21 @@ export default function Login() {
 
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        // Login with backend API
+        const response = await authAPI.login(email, password);
+        await refreshUser();
+        navigate('/command-center');
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        // Signup with backend API
+        const response = await authAPI.signup({
+          email,
+          password,
+          name,
+          companyName: companyName || undefined,
+        });
+        await refreshUser();
+        navigate('/command-center');
       }
-      navigate('/command-center');
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     } finally {
@@ -140,6 +154,22 @@ export default function Login() {
                     onChange={(e) => setName(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="Your name"
+                  />
+                </div>
+              </div>
+            )}
+
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Company Name (Optional)</label>
+                <div className="relative">
+                  <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Your company name"
                   />
                 </div>
               </div>
