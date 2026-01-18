@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Scheduler from './components/Scheduler'
 import Basecamp from './pages/Basecamp'
 import CommandCenter from './pages/CommandCenter'
+import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Landing from './pages/Landing'
 import Employees from './pages/Employees'
@@ -41,6 +42,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CommandCenter />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
                 </ProtectedRoute>
               } 
             />

@@ -1,11 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Command, Users, Calendar, Clock, FileText, Settings, LogOut, Crown, Home, BarChart2 } from 'lucide-react'
+import { Command, Users, Calendar, Clock, FileText, Settings, LogOut, Crown, Home, BarChart2, LayoutDashboard } from 'lucide-react'
 
 export default function Sidebar() {
   const location = useLocation()
 
   const navItems = [
     { path: '/command-center', icon: Command, label: 'Command Center', highlight: true },
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/scheduler', icon: Calendar, label: 'Scheduler' },
     { path: '/basecamp', icon: Home, label: 'Basecamp' },
     { path: '/employees', icon: Users, label: 'Employees' },
