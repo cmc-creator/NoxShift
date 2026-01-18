@@ -168,6 +168,14 @@ export default function Login() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">VIP Access Code (Optional)</label>
               <div className="relative">
@@ -178,14 +186,6 @@ export default function Login() {
                   onChange={(e) => setVipCode(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-200 placeholder-yellow-500/50 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                   placeholder="Enter VIP code for Command Center access"
-                />
-              </div>
-            </div>
-
-                  required
-                  minLength={6}
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="••••••••"
                 />
               </div>
             </div>
