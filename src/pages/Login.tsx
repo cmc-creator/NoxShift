@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   signInWithEmailAndPassword, 
@@ -8,7 +8,7 @@ import {
   signInWithPopup
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { Lock, Mail, User, Zap, Shield, Sparkles, Chrome } from 'lucide-react';
+import { Lock, Mail, User, Zap, Shield, Chrome } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,9 +16,17 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [vipCode, setVipCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Check if VIP code was already entered on Landing page
+  useEffect(() => {
+    const isVIP = localStorage.getItem('noxshift-vip');
+    if (isVIP === 'true') {
+      localStorage.setItem('userRole', 'admin');
+      navigate('/command-center');
+    }
+  }, [navigate]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,14 +34,6 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // Check for VIP code first
-      if (vipCode === 'NOX424') {
-        localStorage.setItem('vip', 'true');
-        localStorage.setItem('userRole', 'admin');
-        navigate('/command-center');
-        return;
-      }
-
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
@@ -172,20 +172,6 @@ export default function Login() {
                   minLength={6}
                   className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="••••••••"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">VIP Access Code (Optional)</label>
-              <div className="relative">
-                <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-400" />
-                <input
-                  type="text"
-                  value={vipCode}
-                  onChange={(e) => setVipCode(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-200 placeholder-yellow-500/50 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  placeholder="Enter VIP code for Command Center access"
                 />
               </div>
             </div>

@@ -399,7 +399,7 @@ export default function Scheduler() {
   const [showShare, setShowShare] = useState(false);
   const [employeePhotos, setEmployeePhotos] = useState<Record<string, string>>({});
   const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([]);
-  const [calendarView, setCalendarView] = useState<'day' | 'week' | 'month' | 'agenda' | 'shift-matrix' | 'bigcalendar'>('bigcalendar');
+  const [calendarView, setCalendarView] = useState<'day' | 'week' | 'month' | 'agenda' | 'shift-matrix' | 'bigcalendar'>('shift-matrix');
   const [calendarDisplayStyle, setCalendarDisplayStyle] = useState<'standard' | 'compact' | 'list' | 'timeline'>('standard');
   const [personalReminders, setPersonalReminders] = useState<Array<{id: string; title: string; date: string; time: string; notes: string}>>([]);
   const [personalEvents, setPersonalEvents] = useState<Array<{id: string; title: string; date: string; startTime: string; endTime: string; notes: string; color: string}>>([]);
