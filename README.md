@@ -129,6 +129,34 @@ The shift matrix view provides a comprehensive grid layout for scheduling:
 
 For detailed migration information, see [SHIFT_MATRIX_MIGRATION.md](SHIFT_MATRIX_MIGRATION.md).
 
+## 📚 Documentation
+
+### Setup & Installation Guides
+- **[NEW_COMPUTER_SETUP.md](NEW_COMPUTER_SETUP.md)** - Complete guide for setting up on a new computer
+- **[SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)** - Quick checklist for setup verification
+- **[PLATFORM_SETUP.md](PLATFORM_SETUP.md)** - Platform-specific instructions (Windows, macOS, Linux)
+- **[SETUP_FLOW.md](SETUP_FLOW.md)** - Visual flow diagrams and quick reference
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
+- **[START_HERE.md](START_HERE.md)** - Backend quick start
+
+### Deployment & Production
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Full deployment guide
+- **[DEPLOY_NOW.md](DEPLOY_NOW.md)** - Quick deployment steps
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Additional deployment information
+- **[PRODUCTION_READINESS.md](PRODUCTION_READINESS.md)** - Production checklist
+
+### Feature Documentation
+- **[FEATURES.md](FEATURES.md)** - Complete feature list
+- **[FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md)** - Feature implementation status
+- **[SHIFT_MATRIX_MIGRATION.md](SHIFT_MATRIX_MIGRATION.md)** - Shift matrix view details
+- **[CALENDAR_INTEGRATION.md](CALENDAR_INTEGRATION.md)** - Calendar features
+
+### Integration & Setup Guides
+- **[BACKEND_SETUP_GUIDE.md](BACKEND_SETUP_GUIDE.md)** - Backend setup details
+- **[BACKEND_INTEGRATION_COMPLETE.md](BACKEND_INTEGRATION_COMPLETE.md)** - Backend integration status
+- **[FIREBASE_AUTH_SETUP.md](FIREBASE_AUTH_SETUP.md)** - Firebase authentication setup
+- **[FIREBASE_PUSH_SETUP.md](FIREBASE_PUSH_SETUP.md)** - Push notification setup
+
 ## Tech Stack
 
 ### Frontend
