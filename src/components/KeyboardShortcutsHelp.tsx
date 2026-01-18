@@ -1,12 +1,17 @@
 import { Command, Zap, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 export function KeyboardShortcutsHelp() {
   const [show, setShow] = useState(false);
+  const location = useLocation();
+  
+  // Hide on login and landing pages
+  const isPublicPage = location.pathname === '/login' || location.pathname === '/';
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === '?' && e.shiftKey) {
+      if (e.key === '?' && e.shiftKey && !isPublicPage) {
         e.preventDefault();
         setShow(true);
       }
@@ -17,10 +22,10 @@ export function KeyboardShortcutsHelp() {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+  }, [isPublicPage]);
 
-  if (!show) {
-    return (
+  if (!show || isPublicPage) {
+    return isPublicPage ? null : (
       <button
         onClick={() => setShow(true)}
         className="fixed bottom-4 right-4 p-3 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg transition-all hover:scale-110 z-50"

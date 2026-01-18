@@ -11,6 +11,7 @@ import { auth } from '../lib/firebase';
 import { authAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Lock, Mail, User, Zap, Shield, Chrome, Sparkles } from 'lucide-react';
+import { BackgroundMusic } from '../components/BackgroundMusic';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -84,6 +85,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <BackgroundMusic autoPlay={true} showControls={true} />
+      
       {/* Animated background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>

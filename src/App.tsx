@@ -36,12 +36,17 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { NotificationToast, useNotifications } from './components/NotificationToast'
 import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp'
 import { Bot, Music } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 
 function AppContent() {
   useKeyboardShortcuts();
   const { notifications, removeNotification } = useNotifications();
   const [isKronoOpen, setIsKronoOpen] = useState(false);
   const [isMusicOpen, setIsMusicOpen] = useState(false);
+  const location = useLocation();
+  
+  // Hide floating buttons on login and landing pages
+  const isPublicPage = location.pathname === '/login' || location.pathname === '/';
 
   return (
     <>
@@ -49,7 +54,7 @@ function AppContent() {
       <KeyboardShortcutsHelp />
       
       {/* Krono AI Floating Button */}
-      {!isKronoOpen && (
+      {!isKronoOpen && !isPublicPage && (
         <button
           onClick={() => setIsKronoOpen(true)}
           className="fixed bottom-6 right-6 z-40 w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all group"
@@ -62,14 +67,16 @@ function AppContent() {
       )}
       
       {/* Music Player Floating Button */}
-      <button
-        onClick={() => setIsMusicOpen(!isMusicOpen)}
-        className="fixed bottom-6 right-24 z-40 w-14 h-14 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all group"
-        title="Toggle Music Player"
-      >
-        <Music className="w-6 h-6 text-white" />
-        <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-purple-400 rounded-full opacity-0 group-hover:opacity-20 transition-opacity"></div>
-      </button>
+      {!isPublicPage && (
+        <button
+          onClick={() => setIsMusicOpen(!isMusicOpen)}
+          className="fixed bottom-6 right-24 z-40 w-14 h-14 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all group"
+          title="Toggle Music Player"
+        >
+          <Music className="w-6 h-6 text-white" />
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-purple-400 rounded-full opacity-0 group-hover:opacity-20 transition-opacity"></div>
+        </button>
+      )}
       
       <KronoAI isOpen={isKronoOpen} onClose={() => setIsKronoOpen(false)} />
       <MusicPlayer isOpen={isMusicOpen} onClose={() => setIsMusicOpen(false)} />
