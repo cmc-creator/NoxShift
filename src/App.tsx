@@ -6,6 +6,10 @@ import Basecamp from './pages/Basecamp'
 import CommandCenter from './pages/CommandCenter'
 import Login from './pages/Login'
 import Landing from './pages/Landing'
+import Employees from './pages/Employees'
+import TimeOff from './pages/TimeOff'
+import Reports from './pages/Reports'
+import Settings from './pages/Settings'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -37,6 +41,38 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CommandCenter />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/employees" 
+              element={
+                <ProtectedRoute>
+                  <Employees />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/timeoff" 
+              element={
+                <ProtectedRoute>
+                  <TimeOff />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/reports" 
+              element={
+                <ProtectedRoute>
+                  <Reports />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               } 
             />
