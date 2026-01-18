@@ -8,7 +8,7 @@ import {
   signInWithPopup
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { Lock, Mail, User, Zap, Shield, Chrome } from 'lucide-react';
+import { Lock, Mail, User, Zap, Shield, Chrome, Sparkles } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
