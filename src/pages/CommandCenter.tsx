@@ -127,7 +127,7 @@ export default function CommandCenter() {
           </div>
 
           {/* Team Management */}
-          <div className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-green-500/30 hover:border-green-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
+          <Link to="/employees" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-green-500/30 hover:border-green-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-green-500/20 rounded-xl">
                 <Users className="w-8 h-8 text-green-400" />
@@ -140,10 +140,10 @@ export default function CommandCenter() {
               <span className="font-bold">47</span>
               <span>active employees</span>
             </div>
-          </div>
+          </Link>
 
           {/* Analytics */}
-          <div className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-cyan-500/30 hover:border-cyan-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
+          <Link to="/reports" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-cyan-500/30 hover:border-cyan-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-cyan-500/20 rounded-xl">
                 <BarChart2 className="w-8 h-8 text-cyan-400" />
@@ -156,7 +156,7 @@ export default function CommandCenter() {
               <TrendingUp className="w-4 h-4" />
               <span>94% efficiency</span>
             </div>
-          </div>
+          </Link>
 
           {/* Payroll */}
           <div className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-emerald-500/30 hover:border-emerald-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
@@ -175,7 +175,7 @@ export default function CommandCenter() {
           </div>
 
           {/* Requests */}
-          <div className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-amber-500/30 hover:border-amber-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
+          <Link to="/timeoff" className="group bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-amber-500/30 hover:border-amber-500 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-amber-500/20 rounded-xl">
                 <Inbox className="w-8 h-8 text-amber-400" />
@@ -188,7 +188,7 @@ export default function CommandCenter() {
               <span className="font-bold">5</span>
               <span>pending approval</span>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Footer */}

@@ -1,8 +1,21 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Command, Users, Calendar, Clock, FileText, Settings, LogOut, Crown, Home, BarChart2, LayoutDashboard } from 'lucide-react'
+import { auth } from '../lib/firebase'
+import { signOut } from 'firebase/auth'
 
 export default function Sidebar() {
   const location = useLocation()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+      localStorage.clear()
+      navigate('/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
 
   const navItems = [
     { path: '/command-center', icon: Command, label: 'Command Center', highlight: true },
@@ -61,7 +74,10 @@ export default function Sidebar() {
             <p className="text-xs text-purple-300">Manager</p>
           </div>
         </div>
-        <button className="w-full px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 rounded-xl transition-all flex items-center justify-center gap-2 font-semibold">
+        <button 
+          onClick={handleLogout}
+          className="w-full px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 rounded-xl transition-all flex items-center justify-center gap-2 font-semibold"
+        >
           <LogOut className="w-4 h-4" />
           Sign Out
         </button>
