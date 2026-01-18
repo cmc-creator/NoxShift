@@ -18,8 +18,8 @@ START HERE
     ↓
 ┌─────────────────────────────────────────┐
 │  2. Clone Repository                    │
-│  $ git clone github.com/cmc-creator/    │
-│    NoxShift.git                         │
+│  $ git clone https://github.com/        │
+│    cmc-creator/NoxShift.git             │
 │  $ cd NoxShift                          │
 └─────────────────────────────────────────┘
     ↓
