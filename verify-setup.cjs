@@ -2,14 +2,14 @@
 /**
  * NoxShift Setup Verification Script
  * Run this after following setup instructions to verify everything is configured correctly
- * Usage: node verify-setup.js
+ * Usage: node verify-setup.cjs
  */
 
 const fs = require('fs');
 const path = require('path');
 
 console.log('\n🔍 NoxShift Setup Verification\n');
-console.log('=' .repeat(50));
+console.log('='.repeat(50));
 
 let errorCount = 0;
 let warningCount = 0;
@@ -156,20 +156,26 @@ if (errorCount === 0 && warningCount === 0) {
   console.log(`   ❌ Found ${errorCount} error(s) and ${warningCount} warning(s).`);
   console.log('   Please fix the errors above before starting the servers.\n');
   
-  // Provide specific guidance
+  // Collect all needed fix commands
+  const fixCommands = [];
   if (!fs.existsSync('node_modules')) {
-    console.log('🔧 Quick fix: Run these commands:');
-    console.log('   npm install');
+    fixCommands.push('npm install');
   }
   if (!fs.existsSync('.env')) {
-    console.log('   cp .env.example .env');
-    console.log('   # Then edit .env and set JWT_SECRET');
+    fixCommands.push('cp .env.example .env');
+    fixCommands.push('# Then edit .env and set JWT_SECRET');
   }
   if (!fs.existsSync('node_modules/@prisma/client')) {
-    console.log('   npx prisma generate');
+    fixCommands.push('npx prisma generate');
   }
   if (!fs.existsSync('dev.db')) {
-    console.log('   npx prisma db push');
+    fixCommands.push('npx prisma db push');
+  }
+  
+  // Output all fix commands together
+  if (fixCommands.length > 0) {
+    console.log('🔧 Quick fix: Run these commands:');
+    fixCommands.forEach(cmd => console.log('   ' + cmd));
   }
   console.log('');
   process.exit(1);
