@@ -30,16 +30,18 @@ import Mentorship from './pages/Mentorship'
 import SkillMatrix from './pages/SkillMatrix'
 import AdvancedAnalytics from './pages/AdvancedAnalytics'
 import KronoAI from './components/KronoAI'
+import MusicPlayer from './components/MusicPlayer'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { NotificationToast, useNotifications } from './components/NotificationToast'
 import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp'
-import { Bot } from 'lucide-react'
+import { Bot, Music } from 'lucide-react'
 
 function AppContent() {
   useKeyboardShortcuts();
   const { notifications, removeNotification } = useNotifications();
   const [isKronoOpen, setIsKronoOpen] = useState(false);
+  const [isMusicOpen, setIsMusicOpen] = useState(false);
 
   return (
     <>
@@ -59,7 +61,18 @@ function AppContent() {
         </button>
       )}
       
+      {/* Music Player Floating Button */}
+      <button
+        onClick={() => setIsMusicOpen(!isMusicOpen)}
+        className="fixed bottom-6 right-24 z-40 w-14 h-14 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all group"
+        title="Toggle Music Player"
+      >
+        <Music className="w-6 h-6 text-white" />
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-purple-400 rounded-full opacity-0 group-hover:opacity-20 transition-opacity"></div>
+      </button>
+      
       <KronoAI isOpen={isKronoOpen} onClose={() => setIsKronoOpen(false)} />
+      <MusicPlayer isOpen={isMusicOpen} onClose={() => setIsMusicOpen(false)} />
       
       <Routes>
             <Route path="/" element={<Landing />} />

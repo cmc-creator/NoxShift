@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import ThemeSelector from '../components/ThemeSelector'
+import PushNotificationSetup from '../components/PushNotificationSetup'
 import { useTheme } from '../context/ThemeContext'
 import { Settings as SettingsIcon, Palette, Bell, Lock, User, Globe, Calendar, Clock, Eye, Languages, Sliders, Moon, Sun, Monitor, Type, Zap, Save, Shield } from 'lucide-react'
 
@@ -183,13 +184,15 @@ export default function Settings() {
               </div>
               <h2 className="text-2xl font-bold text-white">Notifications</h2>
             </div>
+            
+            {/* Push Notification Setup Component */}
+            <div className="mb-4">
+              <PushNotificationSetup />
+            </div>
+            
             <div className="space-y-3">
               <label className="flex items-center justify-between p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">
                 <span className="text-purple-200">Email Notifications</span>
-                <input type="checkbox" defaultChecked className="w-5 h-5 rounded" />
-              </label>
-              <label className="flex items-center justify-between p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">
-                <span className="text-purple-200">Push Notifications</span>
                 <input type="checkbox" defaultChecked className="w-5 h-5 rounded" />
               </label>
               <label className="flex items-center justify-between p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">

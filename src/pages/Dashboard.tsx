@@ -1,4 +1,5 @@
 import Sidebar from '../components/Sidebar'
+import WeatherWidget from '../components/WeatherWidget'
 import { Calendar, Users, Clock, TrendingUp, Zap, Shield, Sparkles, Trophy } from 'lucide-react'
 
 export default function Dashboard() {
@@ -68,6 +69,12 @@ export default function Dashboard() {
               change="+2%"
               gradient="from-purple-500/20 to-pink-500/20"
             />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-1">
+              <WeatherWidget />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
