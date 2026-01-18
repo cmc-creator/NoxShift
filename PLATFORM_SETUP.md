@@ -49,10 +49,11 @@ npm run dev
 
 ### Windows Helper Scripts
 
-The repository includes automated batch files:
+The repository includes automated batch files for Windows environments:
 
+**For Network/Portable Node.js Setups:**
 ```batch
-# Automated setup (if applicable)
+# Automated full setup (copies to C:\Temp\NoxShift)
 SETUP-LOCAL.bat
 
 # Just install dependencies
@@ -61,6 +62,13 @@ install-dependencies.bat
 # Start development server
 start-dev.bat
 ```
+
+**When to use these scripts:**
+- You have a portable Node.js installation
+- Your repository is on a network drive
+- You need to copy the project to a local directory for better performance
+
+**For standard installations:** Use the manual npm commands shown above instead.
 
 ### Common Windows Issues
 

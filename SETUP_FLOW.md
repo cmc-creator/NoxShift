@@ -337,14 +337,15 @@ npx prisma db push --force-reset    # Reset DB
 
 ## Support Resources
 
-| Resource                  | Link/Command          |
-|---------------------------|-----------------------|
-| Detailed Setup            | NEW_COMPUTER_SETUP.md |
-| Platform Specific         | PLATFORM_SETUP.md     |
-| Quick Checklist           | SETUP_CHECKLIST.md    |
-| Main Documentation        | README.md             |
-| Quick Start               | QUICKSTART.md         |
-| Database GUI              | `npx prisma studio`   |
+| Resource                  | Purpose                               |
+|---------------------------|---------------------------------------|
+| NEW_COMPUTER_SETUP.md     | Complete setup from scratch           |
+| PLATFORM_SETUP.md         | OS-specific instructions              |
+| SETUP_CHECKLIST.md        | Quick verification checklist          |
+| README.md                 | Main project documentation            |
+| QUICKSTART.md             | Quick start for existing installations|
+| START_HERE.md             | Backend-focused quick start           |
+| Database GUI              | `npx prisma studio`                   |
 
 ---
 

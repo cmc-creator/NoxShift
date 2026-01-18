@@ -2,6 +2,12 @@
 
 This guide will walk you through setting up NoxShift on a new computer from scratch.
 
+> **📌 Note:** This is the primary comprehensive guide for new computer setup. Other guides in the repository:
+> - **[QUICKSTART.md](QUICKSTART.md)** - For users who already have the repo cloned and want to quickly start the servers
+> - **[START_HERE.md](START_HERE.md)** - Backend-focused quick start assuming setup is already done
+> - **[PLATFORM_SETUP.md](PLATFORM_SETUP.md)** - OS-specific details complementing this guide
+> - **[SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)** - Quick checklist format of these steps
+
 ## Prerequisites
 
 Before you begin, make sure you have the following installed:
@@ -180,19 +186,21 @@ npm run dev
 
 If you're on Windows, the repository includes helper scripts to automate the setup:
 
-### Option A: Automated Setup Script
+### Option A: Automated Setup Script (Windows Network Environment)
 
 ```batch
 # Run this from the project directory
 SETUP-LOCAL.bat
 ```
 
-This script will:
+**⚠️ Important:** This script is designed for specific Windows network environments with portable Node.js installations. It will:
 - Copy the project to a local directory (C:\Temp\NoxShift)
 - Install dependencies
 - Start the development server
 
-### Option B: Quick Install
+**Note:** If you've already cloned the repository to your desired location, skip this and use the manual steps above instead. This script is primarily for development environments with network-mounted drives.
+
+### Option B: Quick Install (Windows Portable Node.js)
 
 ```batch
 # Just install dependencies
@@ -202,7 +210,7 @@ install-dependencies.bat
 start-dev.bat
 ```
 
-**Note:** These scripts are designed for specific Windows environments with portable Node.js installations. If they don't work for your setup, follow the manual steps above instead.
+**Note:** These helper scripts are configured for portable Node.js installations on network drives. For standard Node.js installations, use `npm install` and `npm run dev` instead (as described in the manual steps above).
 
 ---
 
