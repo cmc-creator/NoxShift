@@ -135,11 +135,13 @@ For detailed migration information, see [SHIFT_MATRIX_MIGRATION.md](SHIFT_MATRIX
 
 ### Setup & Installation Guides
 - **[NEW_COMPUTER_SETUP.md](NEW_COMPUTER_SETUP.md)** - Complete guide for setting up on a new computer
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Fix common setup issues and errors
 - **[SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)** - Quick checklist for setup verification
 - **[PLATFORM_SETUP.md](PLATFORM_SETUP.md)** - Platform-specific instructions (Windows, macOS, Linux)
 - **[SETUP_FLOW.md](SETUP_FLOW.md)** - Visual flow diagrams and quick reference
 - **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
 - **[START_HERE.md](START_HERE.md)** - Backend quick start
+- **verify-setup.cjs** - Automated setup verification script (run with `node verify-setup.cjs`)
 
 ### Deployment & Production
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Full deployment guide
