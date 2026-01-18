@@ -64,6 +64,18 @@ Use this checklist when setting up NoxShift on a new computer.
 - [ ] **Verify dev.db created**
   - Check for `dev.db` file in project root
 
+## Verify Setup (Recommended)
+
+- [ ] **Run verification script**
+  ```bash
+  node verify-setup.cjs
+  ```
+  *Should show: "✅ Perfect! Everything is set up correctly."*
+  
+- [ ] **If errors found**
+  - Follow the fix suggestions provided by the script
+  - Re-run the script until all checks pass
+
 ## Start Application
 
 - [ ] **Terminal 1: Start backend**

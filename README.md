@@ -29,6 +29,8 @@ Before running this project, make sure you have:
 
 **See [NEW_COMPUTER_SETUP.md](NEW_COMPUTER_SETUP.md)** for a complete step-by-step guide for cloning and setting up this repository on a new machine.
 
+**Having issues?** Run `node verify-setup.cjs` to automatically check your setup and get specific fix suggestions.
+
 ### Installation
 
 1. Clone the repository:
