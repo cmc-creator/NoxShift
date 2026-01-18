@@ -1,6 +1,7 @@
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useState } from 'react'
 import Scheduler from './components/Scheduler'
 import Basecamp from './pages/Basecamp'
 import CommandCenter from './pages/CommandCenter'
@@ -16,19 +17,42 @@ import PerformanceReviews from './pages/PerformanceReviews'
 import Training from './pages/Training'
 import Compliance from './pages/Compliance'
 import MultiLocation from './pages/MultiLocation'
+import NotificationsCenter from './pages/NotificationsCenter'
+import TeamCalendar from './pages/TeamCalendar'
+import PhotoGallery from './pages/PhotoGallery'
+import Leaderboards from './pages/Leaderboards'
+import KronoAI from './components/KronoAI'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { NotificationToast, useNotifications } from './components/NotificationToast'
 import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp'
+import { Bot } from 'lucide-react'
 
 function AppContent() {
   useKeyboardShortcuts();
   const { notifications, removeNotification } = useNotifications();
+  const [isKronoOpen, setIsKronoOpen] = useState(false);
 
   return (
     <>
       <NotificationToast notifications={notifications} onRemove={removeNotification} />
       <KeyboardShortcutsHelp />
+      
+      {/* Krono AI Floating Button */}
+      {!isKronoOpen && (
+        <button
+          onClick={() => setIsKronoOpen(true)}
+          className="fixed bottom-6 right-6 z-40 w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all group"
+          title="Open Krono AI Assistant"
+        >
+          <Bot className="w-8 h-8 text-white" />
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full opacity-0 group-hover:opacity-20 transition-opacity"></div>
+        </button>
+      )}
+      
+      <KronoAI isOpen={isKronoOpen} onClose={() => setIsKronoOpen(false)} />
+      
       <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
@@ -133,6 +157,38 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <MultiLocation />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/notifications" 
+              element={
+                <ProtectedRoute>
+                  <NotificationsCenter />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/calendar" 
+              element={
+                <ProtectedRoute>
+                  <TeamCalendar />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/photos" 
+              element={
+                <ProtectedRoute>
+                  <PhotoGallery />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/leaderboards" 
+              element={
+                <ProtectedRoute>
+                  <Leaderboards />
                 </ProtectedRoute>
               } 
             />
