@@ -23,17 +23,22 @@ export default function Login() {
   const [companyName, setCompanyName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [vipRedirect, setVipRedirect] = useState(false);
 
   // Check if VIP code was already entered on Landing page
   useEffect(() => {
     const isVIP = localStorage.getItem('noxshift-vip');
-    if (isVIP === 'true') {
+    if (isVIP === 'true' && !vipRedirect) {
       // VIP users get full access - set as admin role
       localStorage.setItem('userRole', 'ADMIN');
       localStorage.setItem('subscriptionTier', 'VIP');
-      navigate('/command-center');
+      setVipRedirect(true);
+      // Small delay to ensure state is set before navigation
+      setTimeout(() => {
+        navigate('/command-center');
+      }, 100);
     }
-  }, [navigate]);
+  }, [navigate, vipRedirect]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
