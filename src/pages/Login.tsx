@@ -28,7 +28,9 @@ export default function Login() {
   useEffect(() => {
     const isVIP = localStorage.getItem('noxshift-vip');
     if (isVIP === 'true') {
-      localStorage.setItem('userRole', 'admin');
+      // VIP users get full access - set as admin role
+      localStorage.setItem('userRole', 'ADMIN');
+      localStorage.setItem('subscriptionTier', 'VIP');
       navigate('/command-center');
     }
   }, [navigate]);
@@ -52,6 +54,14 @@ export default function Login() {
           name,
           companyName: companyName || undefined,
         });
+        
+        // Check if this is a VIP user
+        const isVIP = localStorage.getItem('noxshift-vip');
+        if (isVIP === 'true') {
+          localStorage.setItem('userRole', 'ADMIN');
+          localStorage.setItem('subscriptionTier', 'VIP');
+        }
+        
         await refreshUser();
         navigate('/command-center');
       }

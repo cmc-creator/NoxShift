@@ -12,9 +12,11 @@ export default function Landing() {
   const handleVipAccess = () => {
     if (vipCode.toUpperCase() === 'NOX424') {
       localStorage.setItem('noxshift-vip', 'true');
+      localStorage.setItem('userRole', 'ADMIN');
+      localStorage.setItem('subscriptionTier', 'VIP');
       navigate('/login');
     } else {
-      setVipError('Invalid VIP code');
+      setVipError('Invalid VIP code. Contact your account manager for access.');
     }
   };
 
