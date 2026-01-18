@@ -69,26 +69,50 @@ class PushNotificationService {
    * Initialize Firebase Cloud Messaging (requires Firebase setup)
    */
   async initializeFCM(): Promise<void> {
-    // TODO: Add Firebase initialization
-    // const { initializeApp } = await import('firebase/app');
-    // const { getMessaging, getToken } = await import('firebase/messaging');
-    // 
-    // const firebaseConfig = {
-    //   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    //   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    //   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    //   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    //   appId: import.meta.env.VITE_FIREBASE_APP_ID,
-    // };
-    // 
-    // const app = initializeApp(firebaseConfig);
-    // const messaging = getMessaging(app);
-    // 
-    // this.fcmToken = await getToken(messaging, {
-    //   vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-    // });
-    
-    console.log('FCM initialization pending - Firebase setup required');
+    try {
+      const { app } = await import('../lib/firebase');
+      const { getMessaging, getToken, onMessage } = await import('firebase/messaging');
+      
+      const messaging = getMessaging(app);
+      
+      // Request permission first
+      if (this.permission !== 'granted') {
+        await this.requestPermission();
+      }
+      
+      if (this.permission === 'granted') {
+        // Get FCM token (VAPID key needed from Firebase Console)
+        // To get VAPID key: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
+        try {
+          this.fcmToken = await getToken(messaging, {
+            vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || 'YOUR_VAPID_KEY_HERE',
+          });
+          
+          if (this.fcmToken) {
+            console.log('FCM Token obtained:', this.fcmToken);
+          }
+        } catch (tokenError) {
+          console.warn('FCM token error (VAPID key needed):', tokenError);
+        }
+        
+        // Handle foreground messages
+        onMessage(messaging, (payload) => {
+          console.log('Foreground message received:', payload);
+          
+          if (payload.notification) {
+            this.sendLocalNotification({
+              title: payload.notification.title || 'Notification',
+              body: payload.notification.body || '',
+              data: payload.data,
+            });
+          }
+        });
+      }
+      
+      console.log('FCM initialized successfully');
+    } catch (error) {
+      console.error('Error initializing FCM:', error);
+    }
   }
 
   /**
@@ -101,8 +125,14 @@ class PushNotificationService {
     }
 
     try {
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      console.log('Service Worker registered:', registration);
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        scope: '/'
+      });
+      console.log('Service Worker registered successfully:', registration);
+      
+      // Wait for service worker to be ready
+      await navigator.serviceWorker.ready;
+      console.log('Service Worker is ready');
     } catch (error) {
       console.error('Service Worker registration failed:', error);
     }

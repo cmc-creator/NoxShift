@@ -17,6 +17,12 @@ export default function PushNotificationSetup() {
     setPermission(result);
     
     if (result === 'granted') {
+      // Register service worker
+      await pushNotificationService.registerServiceWorker();
+      
+      // Initialize FCM
+      await pushNotificationService.initializeFCM();
+      
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
       
@@ -26,6 +32,12 @@ export default function PushNotificationSetup() {
         body: 'You\'ll now receive important updates from NoxShift',
         data: { url: '/notifications' }
       });
+      
+      // Log FCM token for testing
+      const token = pushNotificationService.getFCMToken();
+      if (token) {
+        console.log('Your FCM Token (save this for testing):', token);
+      }
     }
   };
 
