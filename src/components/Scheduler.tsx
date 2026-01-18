@@ -442,6 +442,7 @@ export default function Scheduler() {
   const [showEmployeeManagement, setShowEmployeeManagement] = useState(false);
   const [showEmployeeOnboarding, setShowEmployeeOnboarding] = useState(false);
   const [showPTODonations, setShowPTODonations] = useState(false);
+  const [showManagerCenter, setShowManagerCenter] = useState(false); // 🎯 Manager Command Center
   const [compareMonth, setCompareMonth] = useState<Date>(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const [notifications, setNotifications] = useState<Array<{id: string; type: string; message: string; timestamp: number; read: boolean}>>([]);
   const [swapRequests, setSwapRequests] = useState<ShiftSwapRequest[]>([]);
@@ -546,6 +547,16 @@ export default function Scheduler() {
       { name: 'Annalissia', rate: 18 }, 
       { name: 'Kenny', rate: 18 }
   ]);
+  // 🏆 EMPLOYEE XP SYSTEM
+  const [employeeXP, setEmployeeXP] = useState<Record<string, {total: number}>>(() => {
+    const saved = localStorage.getItem('employee-xp');
+    return saved ? JSON.parse(saved) : { 
+      'Izzy': { total: 450 }, 
+      'Karen': { total: 520 }, 
+      'Annalissia': { total: 380 }, 
+      'Kenny': { total: 490 } 
+    };
+  });
   const [roles, setRoles] = useState(['Reception', 'Concierge', 'Manager']);
 
   // 🎮 GAMEHUB STATE
@@ -2656,6 +2667,13 @@ export default function Scheduler() {
     const finalTheme = shift.colorHue === null && departmentHue !== null ? 
       getThemeColors(shift.department || 'General', departmentHue) : theme;
 
+    // Check if employee is in top 2 XP earners
+    const xpRankings = Object.entries(employeeXP).sort((a, b) => b[1].total - a[1].total);
+    const topEmployees = xpRankings.slice(0, 2).map(([name]) => name);
+    const isTopPerformer = topEmployees.includes(shift.employeeName);
+    const rank = topEmployees.indexOf(shift.employeeName) + 1;
+    const tracerColor = rank === 1 ? '#fbbf24' : rank === 2 ? '#c0c0c0' : null; // Gold or Silver
+
     return (
       <div
         key={shift.id}
@@ -2674,7 +2692,7 @@ export default function Scheduler() {
         onClick={(e) => handleShiftClick(e, shift)}
         className={`group relative rounded-md p-1 cursor-move hover:cursor-grab active:cursor-grabbing transition-all hover:scale-[1.02] hover:shadow-lg ${
           isDraft ? 'opacity-90' : ''
-        }`}
+        } ${isTopPerformer ? 'nox-tracer' : ''}`}
         style={{
           backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : finalTheme.bg,
           borderLeft: `3px solid ${finalTheme.border}`,
@@ -2682,10 +2700,13 @@ export default function Scheduler() {
           borderTop: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
           borderBottom: darkMode ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
           borderStyle: isDraft ? 'dashed' : 'solid',
-          boxShadow: darkMode
+          boxShadow: isTopPerformer 
+            ? `0 0 12px ${tracerColor}, 0 0 24px ${tracerColor}40` 
+            : darkMode
             ? `0 1px 4px rgba(0, 0, 0, 0.3)`
-            : `0 1px 4px rgba(0, 0, 0, 0.1)`
-        }}
+            : `0 1px 4px rgba(0, 0, 0, 0.1)`,
+          '--tracer-color': tracerColor
+        } as React.CSSProperties}
       >
         <div className="flex items-start gap-1">
           {/* Photo/Initial Circle - Smaller */}
@@ -3272,6 +3293,10 @@ export default function Scheduler() {
               <Clock className="w-5 h-5 text-white" />
             </button>
             
+            <button onClick={() => setShowManagerCenter(true)} className="nox-tracer p-3 print:hidden" title="Manager Command Center" style={{'--tracer-color': '#a855f7'} as React.CSSProperties}>
+              <Award className="w-5 h-5 text-white" />
+            </button>
+            
             <div className="relative">
               <button onClick={() => setShowNotifications(true)} className="nox-tracer p-3 print:hidden relative" title="Notifications" style={{'--tracer-color': '#fbbf24'} as React.CSSProperties}>
                 <Bell className="w-5 h-5 text-white" />
@@ -3797,9 +3822,6 @@ export default function Scheduler() {
             <button onClick={() => setUsePrivateStorage(!usePrivateStorage)} className={`flex items-center gap-1.5 hover:text-slate-600 transition-all px-2 py-1 rounded-lg hover:bg-white/50 ${usePrivateStorage ? 'text-blue-600 font-bold' : ''}`} title="Switch Storage (Private/Public)">
               {usePrivateStorage ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
               <span className="text-xs">{usePrivateStorage ? 'Private' : 'Public'}</span>
-            </button>
-            <button onClick={() => setShowDebugMenu(!showDebugMenu)} className="flex items-center gap-1 hover:text-slate-600 px-2 py-1 rounded-lg hover:bg-white/50 transition-all">
-              <Settings className="w-3.5 h-3.5" />
             </button>
             {showDebugMenu && (
               <div className="absolute bottom-full right-0 mb-2 w-72 glass rounded-2xl p-4 z-50 animate-scale-in">
@@ -8187,19 +8209,54 @@ export default function Scheduler() {
                       const userMsg = {role: 'user' as const, text: chatInput, timestamp: Date.now()};
                       setChatMessages(prev => [...prev, userMsg]);
                       
-                      // Simple AI response
+                      // Enhanced AI response with variety
                       setTimeout(() => {
-                        let response = "I can help you with scheduling! Try asking about coverage, compliance, or shift optimization.";
-                        if (chatInput.toLowerCase().includes('coverage')) {
-                          response = "📊 Current coverage looks good for this week. You have 18 shifts scheduled with balanced distribution.";
-                        } else if (chatInput.toLowerCase().includes('complian')) {
-                          response = `✅ Labor compliance score: ${oracleInsights.laborCompliance.score}%. You have ${oracleInsights.laborCompliance.warnings.length} warnings to review.`;
-                        } else if (chatInput.toLowerCase().includes('overtime')) {
-                          response = "⚠️ 3 employees are projected to hit overtime next week. Consider redistributing shifts.";
-                        } else if (chatInput.toLowerCase().includes('bonus')) {
-                          response = `💰 You have ${bonusOfferings.filter(b => !b.claimed).length} unclaimed bonus offerings available. Promote these to increase shift pickups!`;
+                        const input = chatInput.toLowerCase();
+                        let response = "I'm here to help! Ask me about schedules, employees, coverage, or reporting.";
+                        
+                        if (input.includes('hello') || input.includes('hi')) {
+                          response = `Hello! I'm ${kronoName}. How can I assist with your scheduling today?`;
+                        } else if (input.includes('coverage') || input.includes('staffing')) {
+                          const totalShifts = shifts.length;
+                          response = `📊 You have ${totalShifts} shifts scheduled. Coverage is ${totalShifts > 20 ? 'excellent' : totalShifts > 10 ? 'good' : 'light'} for the current period.`;
+                        } else if (input.includes('complian') || input.includes('labor')) {
+                          response = `✅ Labor compliance score: ${oracleInsights.laborCompliance.score}%. ${oracleInsights.laborCompliance.warnings.length} warnings need attention.`;
+                        } else if (input.includes('overtime') || input.includes('ot')) {
+                          const overtimeCount = employees.filter(e => shifts.filter(s => s.employeeName === e.name).length > 5).length;
+                          response = `⚠️ ${overtimeCount} employees may be approaching overtime. Consider balancing shifts.`;
+                        } else if (input.includes('employee') || input.includes('staff')) {
+                          response = `👥 You have ${employees.length} employees: ${employees.map(e => e.name).join(', ')}. Need details on anyone?`;
+                        } else if (input.includes('bonus') || input.includes('incentive')) {
+                          response = `💰 ${bonusOfferings.filter(b => !b.claimed).length} bonus offerings available! Promote these to boost shift pickups.`;
+                        } else if (input.includes('report') || input.includes('analytic')) {
+                          response = `📈 Check the Analytics dashboard for comprehensive insights on labor costs, attendance, and performance metrics.`;
+                        } else if (input.includes('help') || input.includes('what can')) {
+                          response = `I can help with: 📅 Schedules, 👥 Employee info, 📊 Coverage analysis, ⚠️ Compliance checks, 💰 Budget forecasts, and more!`;
+                        } else if (input.includes('thank')) {
+                          response = `You're welcome! Happy to help anytime. 😊`;
+                        } else {
+                          const responses = [
+                            `Let me look into that... Based on your current schedule, everything looks organized!`,
+                            `Great question! Your team of ${employees.length} employees is well-balanced across ${departments.length} departments.`,
+                            `I've analyzed your data. Consider checking the Oracle AI for predictive insights!`,
+                            `Interesting! You might find the Performance Dashboard helpful for deeper insights.`,
+                            `From what I see, your scheduling efficiency is strong. Need specific metrics?`
+                          ];
+                          response = responses[Math.floor(Math.random() * responses.length)];
                         }
+                        
                         setChatMessages(prev => [...prev, {role: 'assistant', text: response, timestamp: Date.now()}]);
+                        
+                        // Voice output if enabled
+                        if (kronoVoiceEnabled && window.speechSynthesis) {
+                          const utterance = new SpeechSynthesisUtterance(response);
+                          if (kronoVoice) {
+                            const voices = window.speechSynthesis.getVoices();
+                            const selectedVoice = voices.find(v => v.name === kronoVoice);
+                            if (selectedVoice) utterance.voice = selectedVoice;
+                          }
+                          window.speechSynthesis.speak(utterance);
+                        }
                       }, 800);
                       
                       setChatInput('');
@@ -8352,6 +8409,161 @@ export default function Scheduler() {
                     </select>
                   </div>
                 )}
+              </div>
+              
+              {/* 🎭 Fun Accessories */}
+              <div className="border-t-2 border-slate-200 pt-6">
+                <h3 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+                  ✨ Fun Accessories
+                </h3>
+                <div className="grid grid-cols-8 gap-2">
+                  {['', '👓', '🕶️', '🎩', '👑', '🎀', '🧢', '⛑️', '🎓', '💼', '🎸', '⚡', '🔥', '💎', '🌈', '⭐'].map((accessory, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        const baseEmoji = kronoAvatar.length > 2 ? kronoAvatar[0] : kronoAvatar;
+                        setKronoAvatar(accessory ? baseEmoji + accessory : baseEmoji);
+                        localStorage.setItem('krono-avatar', accessory ? baseEmoji + accessory : baseEmoji);
+                      }}
+                      className={`text-2xl p-2 rounded-lg border-2 transition-all hover:scale-110 ${kronoAvatar.includes(accessory) && accessory ? 'border-purple-500 bg-purple-50' : 'border-slate-200 hover:border-purple-300'}`}
+                      title={accessory || 'None'}
+                    >
+                      {accessory || '∅'}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-500 mt-2">Add glasses, hats, accessories and more to your assistant!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🎯 MANAGER COMMAND CENTER */}
+      {showManagerCenter && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowManagerCenter(false)}>
+          <div className="glass rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-xl">
+                  <Award className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-black gradient-text">Manager Command Center</h2>
+                  <p className="text-sm text-slate-500">Quick actions, kudos, and team management</p>
+                </div>
+              </div>
+              <button onClick={() => setShowManagerCenter(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 🏆 Top Performers */}
+              <div className="glass rounded-2xl p-6">
+                <h3 className="font-bold text-xl mb-4 flex items-center gap-2 text-slate-800">
+                  🏆 Top Performers
+                </h3>
+                <div className="space-y-3">
+                  {Object.entries(employeeXP)
+                    .sort((a, b) => b[1].total - a[1].total)
+                    .slice(0, 5)
+                    .map(([name, xp], idx) => (
+                      <div key={name} className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-slate-50 to-white border-2 border-slate-200">
+                        <div className={`text-2xl font-black ${idx === 0 ? 'text-yellow-500' : idx === 1 ? 'text-slate-400' : 'text-amber-700'}`}>
+                          {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-bold text-slate-800">{name}</div>
+                          <div className="text-xs text-slate-500">{xp.total} XP</div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setStatus({ type: 'success', msg: `Kudos sent to ${name}! 🎉` });
+                            setEmployeeXP(prev => ({
+                              ...prev,
+                              [name]: { total: prev[name].total + 50 }
+                            }));
+                            localStorage.setItem('employee-xp', JSON.stringify({
+                              ...employeeXP,
+                              [name]: { total: employeeXP[name].total + 50 }
+                            }));
+                          }}
+                          className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg font-bold hover:scale-105 transition-all"
+                        >
+                          👏 Kudos
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* 📣 Quick Shoutouts */}
+              <div className="glass rounded-2xl p-6">
+                <h3 className="font-bold text-xl mb-4 flex items-center gap-2 text-slate-800">
+                  📣 Quick Shoutouts
+                </h3>
+                <div className="space-y-3">
+                  {employees.map(emp => (
+                    <div key={emp.name} className="flex items-center gap-3">
+                      <div className="flex-1 font-semibold text-slate-700">{emp.name}</div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setStatus({ type: 'success', msg: `⭐ Great Work sent to ${emp.name}!` });
+                            setEmployeeXP(prev => ({ ...prev, [emp.name]: { total: (prev[emp.name]?.total || 0) + 25 } }));
+                          }}
+                          className="px-3 py-1.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded-lg text-sm font-bold transition-all"
+                        >
+                          ⭐ Great Work
+                        </button>
+                        <button
+                          onClick={() => {
+                            setStatus({ type: 'success', msg: `💪 Team Player sent to ${emp.name}!` });
+                            setEmployeeXP(prev => ({ ...prev, [emp.name]: { total: (prev[emp.name]?.total || 0) + 30 } }));
+                          }}
+                          className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-sm font-bold transition-all"
+                        >
+                          💪 Team Player
+                        </button>
+                        <button
+                          onClick={() => {
+                            setStatus({ type: 'success', msg: `🚀 MVP sent to ${emp.name}!` });
+                            setEmployeeXP(prev => ({ ...prev, [emp.name]: { total: (prev[emp.name]?.total || 0) + 50 } }));
+                          }}
+                          className="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-lg text-sm font-bold transition-all"
+                        >
+                          🚀 MVP
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 📊 Quick Stats */}
+              <div className="glass rounded-2xl p-6 md:col-span-2">
+                <h3 className="font-bold text-xl mb-4 flex items-center gap-2 text-slate-800">
+                  📊 Quick Overview
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-4 rounded-xl">
+                    <div className="text-3xl font-black text-indigo-700">{shifts.length}</div>
+                    <div className="text-xs font-bold text-indigo-600">Total Shifts</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-xl">
+                    <div className="text-3xl font-black text-emerald-700">{employees.length}</div>
+                    <div className="text-xs font-bold text-emerald-600">Team Members</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-50 to-violet-100 p-4 rounded-xl">
+                    <div className="text-3xl font-black text-violet-700">{departments.length}</div>
+                    <div className="text-xs font-bold text-violet-600">Departments</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-amber-50 to-yellow-100 p-4 rounded-xl">
+                    <div className="text-3xl font-black text-amber-700">{Object.keys(employeeXP).length}</div>
+                    <div className="text-xs font-bold text-amber-600">XP Tracked</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
