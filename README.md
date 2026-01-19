@@ -145,9 +145,11 @@ For detailed migration information, see [SHIFT_MATRIX_MIGRATION.md](SHIFT_MATRIX
 
 ### Deployment & Production
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Full deployment guide
+- **[RAILWAY_TROUBLESHOOTING.md](RAILWAY_TROUBLESHOOTING.md)** - Fix Railway deployment issues
 - **[DEPLOY_NOW.md](DEPLOY_NOW.md)** - Quick deployment steps
 - **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Additional deployment information
 - **[PRODUCTION_READINESS.md](PRODUCTION_READINESS.md)** - Production checklist
+- **[CHECKPOINT_2026-01-18_RAILWAY_DEPLOYMENT.md](CHECKPOINT_2026-01-18_RAILWAY_DEPLOYMENT.md)** - Railway deployment status
 
 ### Feature Documentation
 - **[FEATURES.md](FEATURES.md)** - Complete feature list
