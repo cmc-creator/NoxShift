@@ -21,21 +21,38 @@ Before running this project, make sure you have:
 
 - **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
 - **npm** or **yarn** package manager
+- **Git** - [Download here](https://git-scm.com/downloads)
 
-## Installation
+## Quick Start
 
-1. Install dependencies:
+### 🆕 Setting up on a new computer?
+
+**See [NEW_COMPUTER_SETUP.md](NEW_COMPUTER_SETUP.md)** for a complete step-by-step guide for cloning and setting up this repository on a new machine.
+
+**Having issues?** Run `node verify-setup.cjs` to automatically check your setup and get specific fix suggestions.
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/cmc-creator/NoxShift.git
+cd NoxShift
+```
+
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Create a `.env` file in the root directory:
+3. Create a `.env` file in the root directory:
 ```env
 DATABASE_URL="file:./dev.db"
 PORT=5000
+JWT_SECRET="your-super-secret-jwt-key-minimum-32-characters-long"
+VITE_API_URL=http://localhost:5000/api
 ```
 
-3. Set up the database:
+4. Set up the database:
 ```bash
 npx prisma generate
 npx prisma db push
@@ -113,6 +130,38 @@ The shift matrix view provides a comprehensive grid layout for scheduling:
 4. Drag shifts to reschedule, click to edit details
 
 For detailed migration information, see [SHIFT_MATRIX_MIGRATION.md](SHIFT_MATRIX_MIGRATION.md).
+
+## 📚 Documentation
+
+### Setup & Installation Guides
+- **[NEW_COMPUTER_SETUP.md](NEW_COMPUTER_SETUP.md)** - Complete guide for setting up on a new computer
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Fix common setup issues and errors
+- **[SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)** - Quick checklist for setup verification
+- **[PLATFORM_SETUP.md](PLATFORM_SETUP.md)** - Platform-specific instructions (Windows, macOS, Linux)
+- **[SETUP_FLOW.md](SETUP_FLOW.md)** - Visual flow diagrams and quick reference
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
+- **[START_HERE.md](START_HERE.md)** - Backend quick start
+- **verify-setup.cjs** - Automated setup verification script (run with `node verify-setup.cjs`)
+
+### Deployment & Production
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Full deployment guide
+- **[RAILWAY_TROUBLESHOOTING.md](RAILWAY_TROUBLESHOOTING.md)** - Fix Railway deployment issues
+- **[DEPLOY_NOW.md](DEPLOY_NOW.md)** - Quick deployment steps
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Additional deployment information
+- **[PRODUCTION_READINESS.md](PRODUCTION_READINESS.md)** - Production checklist
+- **[CHECKPOINT_2026-01-18_RAILWAY_DEPLOYMENT.md](CHECKPOINT_2026-01-18_RAILWAY_DEPLOYMENT.md)** - Railway deployment status
+
+### Feature Documentation
+- **[FEATURES.md](FEATURES.md)** - Complete feature list
+- **[FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md)** - Feature implementation status
+- **[SHIFT_MATRIX_MIGRATION.md](SHIFT_MATRIX_MIGRATION.md)** - Shift matrix view details
+- **[CALENDAR_INTEGRATION.md](CALENDAR_INTEGRATION.md)** - Calendar features
+
+### Integration & Setup Guides
+- **[BACKEND_SETUP_GUIDE.md](BACKEND_SETUP_GUIDE.md)** - Backend setup details
+- **[BACKEND_INTEGRATION_COMPLETE.md](BACKEND_INTEGRATION_COMPLETE.md)** - Backend integration status
+- **[FIREBASE_AUTH_SETUP.md](FIREBASE_AUTH_SETUP.md)** - Firebase authentication setup
+- **[FIREBASE_PUSH_SETUP.md](FIREBASE_PUSH_SETUP.md)** - Push notification setup
 
 ## Tech Stack
 
