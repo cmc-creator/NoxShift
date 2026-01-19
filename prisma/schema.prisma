@@ -10,73 +10,95 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  password       String
+  name           String
+  role           String   @default("USER") // USER, ADMIN, MANAGER
+  organizationId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+}
+
 model Employee {
-  id            String   @id @default(uuid())
-  firstName     String
-  lastName      String
-  email         String   @unique
-  phone         String?
-  position      String
-  department    String?
-  hourlyRate    Float?
-  startDate     DateTime
-  status        String   @default("active") // active, inactive, on-leave
-  availability  String?  // Store availability preferences as JSON string
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  shifts        Shift[]
+  id           String   @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String   @unique
+  phone        String?
+  position     String
+  department   String?
+  hourlyRate   Float?
+  startDate    DateTime
+  status       String   @default("active") // active, inactive, on-leave
+  availability String? // Store availability preferences as JSON string
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  shifts          Shift[]
   timeOffRequests TimeOffRequest[]
-  swapRequests  ShiftSwapRequest[]
+  swapRequests    ShiftSwapRequest[]
 }
 
 model Shift {
-  id          String   @id @default(uuid())
-  employeeId  String
-  startTime   DateTime
-  endTime     DateTime
-  position    String
-  notes       String?
-  status      String   @default("scheduled") // scheduled, completed, cancelled
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  employee    Employee @relation(fields: [employeeId], references: [id])
+  id         String   @id @default(uuid())
+  employeeId String
+  startTime  DateTime
+  endTime    DateTime
+  position   String
+  notes      String?
+  status     String   @default("scheduled") // scheduled, completed, cancelled
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  employee     Employee           @relation(fields: [employeeId], references: [id])
   swapRequests ShiftSwapRequest[]
 }
 
 model TimeOffRequest {
-  id          String   @id @default(uuid())
-  employeeId  String
-  startDate   DateTime
-  endDate     DateTime
-  type        String   // vacation, sick, personal
-  reason      String?
-  status      String   @default("pending") // pending, approved, denied
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  employee    Employee @relation(fields: [employeeId], references: [id])
+  id         String   @id @default(uuid())
+  employeeId String
+  startDate  DateTime
+  endDate    DateTime
+  type       String // vacation, sick, personal
+  reason     String?
+  status     String   @default("pending") // pending, approved, denied
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id])
 }
 
 model ShiftSwapRequest {
-  id              String   @id @default(uuid())
-  shiftId         String
-  requesterId     String
+  id               String   @id @default(uuid())
+  shiftId          String
+  requesterId      String
   targetEmployeeId String?
-  status          String   @default("pending") // pending, approved, denied
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  shift           Shift    @relation(fields: [shiftId], references: [id])
-  requester       Employee @relation(fields: [requesterId], references: [id])
+  status           String   @default("pending") // pending, approved, denied
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  shift     Shift    @relation(fields: [shiftId], references: [id])
+  requester Employee @relation(fields: [requesterId], references: [id])
 }
 
 model Setting {
-  id          String   @id @default(uuid())
-  key         String   @unique
-  value       String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
